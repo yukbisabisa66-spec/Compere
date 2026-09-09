@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Komparasi Data Excel (1 File)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide">Excel Single-File Comparator</h1>
+            <span class="text-xs bg-indigo-800 text-indigo-200 px-3 py-1 rounded-full font-medium">1 File Upload</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 w-full flex-grow">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-slate-900">Komparasi Dua Kolom dalam 1 File Excel</h2>
+            <p class="text-slate-600 mt-1">Unggah 1 file Excel yang berisi dua kolom (misal kolom EJ dan GL), lalu bandingkan isinya secara otomatis.</p>
+        </div>
+
+        <!-- Upload Box -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Pilih File Excel (.xlsx / .xls / .csv)</label>
+            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-slate-200 rounded-lg p-1"/>
+            <p id="fileInfo" class="text-xs text-slate-500 mt-2">Belum ada file dipilih</p>
+        </div>
+
+        <!-- Column Settings -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
+            <h3 class="text-md font-semibold text-slate-800 mb-4">Pengaturan Kolom Komparasi</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Kolom Pertama (Contoh: EJ)</label>
+                    <input type="text" id="col1" value="EJ" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Kolom Kedua (Contoh: GL)</label>
+                    <input type="text" id="col2" value="GL" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <button onclick="compareColumns()" id="compareBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-sm disabled:opacity-50" disabled>
+                        Proses Komparasi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultSection" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Hasil Komparasi</h3>
+                    <p id="summaryText" class="text-sm text-slate-600"></p>
+                </div>
+                <button onclick="downloadResult()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm flex items-center space-x-2 shadow-sm">
+                    <span>Download Hasil (.xlsx)</span>
+                </button>
+            </div>
+
+            <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-96">
+                <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
+                    <thead class="bg-slate-100 sticky top-0">
+                        <tr>
+                            <th id="th1" class="px-4 py-3 font-semibold text-slate-700">Kolom 1</th>
+                            <th id="th2" class="px-4 py-3 font-semibold text-slate-700">Kolom 2</th>
+                            <th class="px-4 py-3 font-semibold text-slate-700">Status / Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        Excel Single-File Comparator &bull; Berbasis Web
+    </footer>
+
+    <script>
+        let fileData = [];
+        let comparisonResult = [];
+
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('fileInfo').innerText = `File dipilih: ${file.name}`;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const wb = XLSX.read(evt.target.result, {type: 'binary'});
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                fileData = XLSX.utils.sheet_to_json(ws, {defval: ""});
+
+                if (fileData.length > 0) {
+                    document.getElementById('compareBtn').removeAttribute('disabled');
+                }
+            };
+            reader.readAsBinaryString(file);
+        });
+
+        function compareColumns() {
+            const c1 = document.getElementById('col1').value.trim();
+            const c2 = document.getElementById('col2').value.trim();
+
+            if (!c1 || !c2) {
+                alert("Harap isi nama kedua kolom!");
+                return;
+            }
+
+            document.getElementById('th1').innerText = `Kolom (${c1})`;
+            document.getElementById('th2').innerText = `Kolom (${c2})`;
+
+            let set1 = new Set(fileData.map(r => r[c1] !== undefined && r[c1] !== '' ? String(r[c1]).trim() : null).filter(x => x !== null));
+            let set2 = new Set(fileData.map(r => r[c2] !== undefined && r[c2] !== '' ? String(r[c2]).trim() : null).filter(x => x !== null));
+
+            let allVals = Array.from(new Set([...set1, ...set2])).sort((a,b) => {
+                return !isNaN(a) && !isNaN(b) ? Number(a) - Number(b) : String(a).localeCompare(String(b));
+            });
+
+            comparisonResult = [];
+            let stats = { sama: 0, hanya1: 0, hanya2: 0 };
+
+            allVals.forEach(val => {
+                let in1 = set1.has(val);
+                let in2 = set2.has(val);
+                let status = '';
+
+                if (in1 && in2) {
+                    stats.sama++;
+                    status = 'SAMA (Ada di kedua kolom)';
+                } else if (in1 && !in2) {
+                    stats.hanya1++;
+                    status = `Hanya ada di kolom ${c1}`;
+                } else if (!in1 && in2) {
+                    stats.hanya2++;
+                    status = `Hanya ada di kolom ${c2}`;
+                }
+
+                let rowObj = {};
+                rowObj[c1] = in1 ? val : '';
+                rowObj[c2] = in2 ? val : '';
+                rowObj['Status'] = status;
+                comparisonResult.push(rowObj);
+            });
+
+            document.getElementById('summaryText').innerText = 
+                `Total Sama: ${stats.sama} | Hanya di ${c1}: ${stats.hanya1} | Hanya di ${c2}: ${stats.hanya2}`;
+            
+            document.getElementById('resultSection').classList.remove('hidden');
+            
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            comparisonResult.forEach(row => {
+                let tr = document.createElement('tr');
+                let statusText = row['Status'];
+                let statusClass = statusText.includes('SAMA') ? 'text-emerald-600' : 'text-amber-600';
+                
+                tr.innerHTML = `
+                    <td class="px-4 py-2.5 font-medium text-slate-800">${row[c1]}</td>
+                    <td class="px-4 py-2.5 font-medium text-slate-800">${row[c2]}</td>
+                    <td class="px-4 py-2.5 font-bold ${statusClass}">${statusText}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function downloadResult() {
+            if (comparisonResult.length === 0) return;
+            const ws = XLSX.utils.json_to_sheet(comparisonResult);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
+            XLSX.writeFile(wb, "Hasil_Komparasi_Kolom.xlsx");
+        }
+    </script>
+</body>
+</html>
