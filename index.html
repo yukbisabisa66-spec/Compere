@@ -9,34 +9,45 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
+
+        /* Pengaturan Cetak/Print Model Menyamping (Multi-Blok) */
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            #resultSection { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+            table { width: 100% !important; border-collapse: collapse !important; }
+            th, td { padding: 4px 6px !important; font-size: 10px !important; border: 1px solid #94a3b8 !important; }
+            td.spacer, th.spacer { border: none !important; width: 15px !important; background: transparent !important; }
+            .max-h-96 { max-height: none !important; overflow: visible !important; border: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
 
-    <header class="bg-indigo-900 text-white shadow-md">
+    <header class="bg-indigo-900 text-white shadow-md no-print">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wide">Sistem Compere Data EJ dan GL ATM</h1>
-            <span class="text-xs bg-indigo-800 text-indigo-200 px-3 py-1 rounded-full font-medium">1 File Upload</span>
+            <h1 class="text-xl font-bold tracking-wide">SISTEM COMPERE DATA EJ DAN GJ SELISIH ATM</h1>
+            <span class="text-xs bg-indigo-800 text-indigo-200 px-3 py-1 rounded-full font-medium">Iqbalfaldi</span>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-8 w-full flex-grow">
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold text-slate-900">Komparasi Dua Kolom dalam 1 File Excel</h2>
-            <p class="text-slate-600 mt-1">Unggah 1 file Excel yang berisi dua kolom (misal kolom EJ dan GL), lalu bandingkan isinya secara otomatis.</p>
+        <div class="mb-8 no-print">
+            <h2 class="text-2xl font-bold text-slate-900">CARILAH SELISIH SAMPAI DAPAT DI SISTEM KAMI</h2>
+            <p class="text-slate-600 mt-1">Hanya Dengan Unggah 1 file Excel, bandingkan isinya dengan status lengkap, lalu cetak atau download, mudah kan.</p>
         </div>
 
         <!-- Upload Box -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6 no-print">
             <label class="block text-sm font-semibold text-slate-700 mb-2">Pilih File Excel (.xlsx / .xls / .csv)</label>
             <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-slate-200 rounded-lg p-1"/>
             <p id="fileInfo" class="text-xs text-slate-500 mt-2">Belum ada file dipilih</p>
         </div>
 
         <!-- Column Settings -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
-            <h3 class="text-md font-semibold text-slate-800 mb-4">Pengaturan Kolom Komparasi</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8 no-print">
+            <h3 class="text-md font-semibold text-slate-800 mb-4">Pengaturan Kolom & Layout Cetak</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Kolom Pertama (Contoh: EJ)</label>
                     <input type="text" id="col1" value="EJ" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
@@ -44,6 +55,15 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Kolom Kedua (Contoh: GL)</label>
                     <input type="text" id="col2" value="GL" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Blok Jejeran</label>
+                    <select id="layoutCols" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white" onchange="renderTableLayout()">
+                        <option value="1">1 Blok (Memanjang)</option>
+                        <option value="2">2 Blok Berjajar</option>
+                        <option value="3" selected>3 Blok Berjajar</option>
+                        <option value="4">4 Blok Berjajar</option>
+                    </select>
                 </div>
                 <div>
                     <button onclick="compareColumns()" id="compareBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-sm disabled:opacity-50" disabled>
@@ -55,38 +75,42 @@
 
         <!-- Result Section -->
         <div id="resultSection" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 no-print">
                 <div>
                     <h3 class="text-lg font-bold text-slate-900">Hasil Komparasi</h3>
                     <p id="summaryText" class="text-sm text-slate-600"></p>
                 </div>
-                <button onclick="downloadResult()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm flex items-center space-x-2 shadow-sm">
-                    <span>Download Hasil (.xlsx)</span>
-                </button>
+                <div class="flex items-center space-x-3">
+                    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm shadow-sm flex items-center space-x-2">
+                        <span>Cetak Laporan</span>
+                    </button>
+                    <button onclick="downloadResult()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm shadow-sm flex items-center space-x-2">
+                        <span>Download Hasil (.xlsx)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Judul khusus cetak -->
+            <div class="hidden print:block mb-4 text-center">
+                <h2 class="text-sm font-bold">HASIL COMPERE EJ DAN GL</h2>
             </div>
 
             <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-96">
-                <table class="min-w-full divide-y divide-slate-200 text-left text-xs">
-                    <thead class="bg-slate-100 sticky top-0">
-                        <tr>
-                            <th id="th1" class="px-4 py-3 font-semibold text-slate-700">Kolom 1</th>
-                            <th id="th2" class="px-4 py-3 font-semibold text-slate-700">Kolom 2</th>
-                            <th class="px-4 py-3 font-semibold text-slate-700">Status / Keterangan</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+                <table class="min-w-full text-left text-xs whitespace-nowrap">
+                    <thead id="dynamicThead" class="bg-slate-100 sticky top-0 border-b border-slate-300"></thead>
+                    <tbody id="dynamicTbody" class="bg-white"></tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
-        Excel Single-File Comparator &bull; Iqbalfaldi2026
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 no-print">
+        SISTEM COMPERE DATA &bull; Iqbalfaldi21
     </footer>
 
     <script>
         let fileData = [];
-        let comparisonResult = [];
+        let rawComparisonResult = [];
 
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -115,9 +139,6 @@
                 return;
             }
 
-            document.getElementById('th1').innerText = `Kolom (${c1})`;
-            document.getElementById('th2').innerText = `Kolom (${c2})`;
-
             let set1 = new Set(fileData.map(r => r[c1] !== undefined && r[c1] !== '' ? String(r[c1]).trim() : null).filter(x => x !== null));
             let set2 = new Set(fileData.map(r => r[c2] !== undefined && r[c2] !== '' ? String(r[c2]).trim() : null).filter(x => x !== null));
 
@@ -125,7 +146,7 @@
                 return !isNaN(a) && !isNaN(b) ? Number(a) - Number(b) : String(a).localeCompare(String(b));
             });
 
-            comparisonResult = [];
+            rawComparisonResult = [];
             let stats = { sama: 0, hanya1: 0, hanya2: 0 };
 
             allVals.forEach(val => {
@@ -135,7 +156,7 @@
 
                 if (in1 && in2) {
                     stats.sama++;
-                    status = 'SAMA (Ada di kedua kolom)';
+                    status = 'TRUE';
                 } else if (in1 && !in2) {
                     stats.hanya1++;
                     status = `Hanya ada di kolom ${c1}`;
@@ -144,40 +165,110 @@
                     status = `Hanya ada di kolom ${c2}`;
                 }
 
-                let rowObj = {};
-                rowObj[c1] = in1 ? val : '';
-                rowObj[c2] = in2 ? val : '';
-                rowObj['Status'] = status;
-                comparisonResult.push(rowObj);
+                rawComparisonResult.push({
+                    val1: in1 ? val : '',
+                    val2: in2 ? val : '',
+                    status: status
+                });
             });
 
-            document.getElementById('summaryText').innerText = 
-                `Total Sama: ${stats.sama} | Hanya di ${c1}: ${stats.hanya1} | Hanya di ${c2}: ${stats.hanya2}`;
-            
+            document.getElementById('summaryText').innerText = `Total Data: ${allVals.length} | Sama: ${stats.sama} | Hanya di ${c1}: ${stats.hanya1} | Hanya di ${c2}: ${stats.hanya2}`;
             document.getElementById('resultSection').classList.remove('hidden');
             
-            const tbody = document.getElementById('tableBody');
+            renderTableLayout();
+        }
+
+        function renderTableLayout() {
+            if (rawComparisonResult.length === 0) return;
+
+            const cols = parseInt(document.getElementById('layoutCols').value);
+            const c1 = document.getElementById('col1').value.trim();
+            const c2 = document.getElementById('col2').value.trim();
+            
+            const thead = document.getElementById('dynamicThead');
+            const tbody = document.getElementById('dynamicTbody');
+
+            // 1. Buat Header Berjajar
+            let theadHTML = '<tr>';
+            for (let i = 0; i < cols; i++) {
+                theadHTML += `<th class="px-3 py-2 font-semibold text-slate-700 border border-slate-300 text-center">${c1}</th>`;
+                theadHTML += `<th class="px-3 py-2 font-semibold text-slate-700 border border-slate-300 text-center">${c2}</th>`;
+                theadHTML += `<th class="px-3 py-2 font-semibold text-slate-700 border border-slate-300 text-center">STATUS</th>`;
+                if (i < cols - 1) {
+                    theadHTML += `<th class="spacer px-1 py-2 border-none"></th>`;
+                }
+            }
+            theadHTML += '</tr>';
+            thead.innerHTML = theadHTML;
+
+            // 2. Buat Body Berjajar ke Samping
             tbody.innerHTML = '';
-            comparisonResult.forEach(row => {
-                let tr = document.createElement('tr');
-                let statusText = row['Status'];
-                let statusClass = statusText.includes('SAMA') ? 'text-emerald-600' : 'text-amber-600';
-                
-                tr.innerHTML = `
-                    <td class="px-4 py-2.5 font-medium text-slate-800">${row[c1]}</td>
-                    <td class="px-4 py-2.5 font-medium text-slate-800">${row[c2]}</td>
-                    <td class="px-4 py-2.5 font-bold ${statusClass}">${statusText}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+            let totalRows = rawComparisonResult.length;
+            let rowsPerCol = Math.ceil(totalRows / cols);
+
+            for (let r = 0; r < rowsPerCol; r++) {
+                let trHTML = '';
+                for (let c = 0; c < cols; c++) {
+                    let dataIndex = c * rowsPerCol + r;
+                    let item = rawComparisonResult[dataIndex];
+                    
+                    let val1 = item ? item.val1 : '';
+                    let val2 = item ? item.val2 : '';
+                    let status = item ? item.status : '';
+                    
+                    // Mengatur warna: Hijau jika TRUE, kuning/amber jika lainnya
+                    let statusClass = status === 'TRUE' ? 'text-emerald-700 font-medium' : 'text-amber-600 font-medium';
+
+                    trHTML += `<td class="px-3 py-1.5 border border-slate-300 text-center">${val1}</td>`;
+                    trHTML += `<td class="px-3 py-1.5 border border-slate-300 text-center">${val2}</td>`;
+                    trHTML += `<td class="px-3 py-1.5 border border-slate-300 text-center ${statusClass}">${status}</td>`;
+
+                    if (c < cols - 1) {
+                        trHTML += `<td class="spacer px-1 py-1 border-none"></td>`;
+                    }
+                }
+                tbody.innerHTML += `<tr class="hover:bg-slate-50">${trHTML}</tr>`;
+            }
         }
 
         function downloadResult() {
-            if (comparisonResult.length === 0) return;
-            const ws = XLSX.utils.json_to_sheet(comparisonResult);
+            if (rawComparisonResult.length === 0) return;
+
+            const cols = parseInt(document.getElementById('layoutCols').value);
+            const c1 = document.getElementById('col1').value.trim();
+            const c2 = document.getElementById('col2').value.trim();
+
+            let excelDataArray = [];
+            
+            let headerRow = [];
+            for (let c = 0; c < cols; c++) {
+                headerRow.push(c1, c2, 'STATUS');
+                if (c < cols - 1) headerRow.push('');
+            }
+            excelDataArray.push(headerRow);
+
+            let totalRows = rawComparisonResult.length;
+            let rowsPerCol = Math.ceil(totalRows / cols);
+
+            for (let r = 0; r < rowsPerCol; r++) {
+                let rowData = [];
+                for (let c = 0; c < cols; c++) {
+                    let dataIndex = c * rowsPerCol + r;
+                    let item = rawComparisonResult[dataIndex];
+                    
+                    rowData.push(item ? item.val1 : '');
+                    rowData.push(item ? item.val2 : '');
+                    rowData.push(item ? item.status : '');
+
+                    if (c < cols - 1) rowData.push('');
+                }
+                excelDataArray.push(rowData);
+            }
+
+            const ws = XLSX.utils.aoa_to_sheet(excelDataArray);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
-            XLSX.writeFile(wb, "Hasil_Komparasi_Kolom.xlsx");
+            XLSX.writeFile(wb, "Hasil_Komparasi_MultiBlok.xlsx");
         }
     </script>
 </body>
