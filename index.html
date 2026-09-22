@@ -3,126 +3,752 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Komparasi Data Excel (1 File)</title>
+    <title>Sistem Compere Data EJ & GL</title>
+    <!-- Library Excel & Tailwind CSS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-
-        /* Pengaturan Cetak/Print Model Menyamping (Multi-Blok) */
-        @media print {
-            body { background: white !important; color: black !important; }
-            .no-print { display: none !important; }
-            #resultSection { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
-            table { width: 100% !important; border-collapse: collapse !important; }
-            th, td { padding: 4px 6px !important; font-size: 10px !important; border: 1px solid #94a3b8 !important; }
-            td.spacer, th.spacer { border: none !important; width: 15px !important; background: transparent !important; }
-            .max-h-96 { max-height: none !important; overflow: visible !important; border: none !important; }
+    <style id="dynamicPrintStyle">
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
         }
+
+        .slate-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .slate-nav {
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+        }
+
+        .slate-input {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            transition: border-color 0.15s ease;
+        }
+
+        .slate-input:focus {
+            border-color: #6366f1;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transition: opacity 0.15s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* GRID LAYOUT DINAMIS UNTUK PREVIEW & PRINT (TANPA MAX-HEIGHT) */
+        .preview-grid {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+            align-items: start;
+        }
+
+        .cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+        @media (max-width: 1024px) {
+            .preview-grid { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+        }
+
+        /* CETAK: SETIAP HALAMAN ADALAH 1 GRUP TABEL.
+           Data mengalir VERTIKAL di tabel, lalu tabel berikutnya ke SAMPING.
+           Setelah semua kolom pada satu halaman penuh, baru pindah ke halaman berikutnya. */
+        @page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
+
+        .print-page {
+            display: grid;
+            gap: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            align-items: start;
+        }
+
+        .print-page.cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .print-page.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .print-page.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .print-page.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .print-page.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+
+        .site-footer {
+            text-align: center;
+            padding: 10px 16px 14px;
+            font-size: 10px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        @media print {
+            .site-footer { display: none !important; }
+        }
+
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .no-print { display: none !important; }
+
+            #resultSection {
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                background: transparent !important;
+                width: 100% !important;
+            }
+
+            .stat-card-print {
+                border: 1px solid #64748b !important;
+                background: #f8fafc !important;
+                color: black !important;
+                padding: 4px 8px !important;
+                border-radius: 6px !important;
+            }
+
+            #multiColumnContainer {
+                display: block !important;
+                width: 100% !important;
+                overflow: visible !important;
+                padding: 0 !important;
+            }
+
+            .print-page {
+                display: grid !important;
+                width: 100% !important;
+                gap: 6px !important;
+                break-after: page !important;
+                page-break-after: always !important;
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                align-items: start !important;
+            }
+
+            .print-page:last-child {
+                break-after: auto !important;
+                page-break-after: auto !important;
+            }
+
+            .print-page.cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+            .print-page.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .print-page.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+            .print-page.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+            .print-page.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+
+            .print-table-block {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                border: 1px solid #64748b !important;
+                background: white !important;
+                border-radius: 4px !important;
+                overflow: hidden !important;
+                height: fit-content !important;
+            }
+
+            table.print-table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 7.5pt !important;
+                background: white !important;
+                color: black !important;
+            }
+
+            table.print-table th,
+            table.print-table td {
+                padding: 2px 3px !important;
+                border: 1px solid #94a3b8 !important;
+            }
+
+            table.print-table th {
+                background-color: #f1f5f9 !important;
+                color: black !important;
+            }
+        }
+
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col justify-between text-slate-100">
 
-    <header class="bg-indigo-900 text-white shadow-md no-print">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wide">SISTEM COMPERE DATA EJ DAN GJ SELISIH ATM</h1>
-            <span class="text-xs bg-indigo-800 text-indigo-200 px-3 py-1 rounded-full font-medium">Iqbalfaldi</span>
+    <!-- OVERLAY LOGIN -->
+    <div id="loginGate" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+        <div class="slate-card w-full max-w-md rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-indigo-600 rounded-xl mx-auto flex items-center justify-center text-white text-xl font-bold shadow-lg mb-3">
+                    EJ
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-tight">Selamat Datang</h2>
+                <p class="text-xs text-slate-400 mt-1 font-medium">Sistem Compere Data EJ & GL</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div id="loginError" class="hidden bg-rose-500/10 text-rose-400 text-xs p-3 rounded-xl border border-rose-500/20 text-center font-medium"></div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Username</label>
+                    <input type="text" id="username" required placeholder="Masukkan username" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Password</label>
+                    <input type="password" id="password" required placeholder="Masukkan password" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
+                </div>
+                <button type="submit" class="btn-primary w-full text-white font-semibold py-3 rounded-xl text-sm mt-2">
+                    Masuk ke Sistem
+                </button>
+
+                <div class="pt-3 flex justify-between items-center text-xs font-medium">
+                    <button type="button" onclick="openResetModal()" class="text-indigo-400 hover:text-indigo-300">Lupa Password?</button>
+                    <button type="button" onclick="openSetNewPassModal()" class="text-emerald-400 hover:text-emerald-300 font-semibold">Gunakan Token?</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL RESET & SET PASS -->
+    <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+        <div class="slate-card w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <h3 class="text-base font-bold text-white">Pengajuan Lupa Password</h3>
+            <p class="text-xs text-slate-400">Kirim permintaan reset ke Admin untuk mendapatkan Kode Token.</p>
+            <input type="text" id="resetUsername" placeholder="Masukkan Username Anda" class="slate-input w-full px-4 py-2.5 rounded-xl text-sm">
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200">Batal</button>
+                <button onclick="submitResetRequest()" class="btn-primary px-4 py-2 text-xs text-white rounded-xl font-semibold">Kirim Permintaan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="setNewPassModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+        <div class="slate-card w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <h3 class="text-base font-bold text-white">Buat Password Baru</h3>
+            <p class="text-xs text-slate-400">Masukkan Token Otorisasi dari Admin dan password baru Anda.</p>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Username</label>
+                <input type="text" id="tokenUsername" placeholder="Masukkan Username" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Kode Token Otorisasi</label>
+                <input type="text" id="tokenCode" placeholder="Masukkan Token dari Admin" class="slate-input w-full px-3 py-2 rounded-xl text-sm font-mono uppercase">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Password Baru Anda</label>
+                <input type="password" id="userNewPassword" placeholder="Masukkan Password Baru" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeSetNewPassModal()" class="px-4 py-2 text-xs font-semibold text-slate-400">Batal</button>
+                <button onclick="submitNewPasswordWithToken()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition">Simpan Password Baru</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="changePassModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+        <div class="slate-card w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <h3 class="text-base font-bold text-white">Ganti Password Akun</h3>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Password Lama</label>
+                <input type="password" id="oldPass" placeholder="Masukkan Password Lama" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Password Baru</label>
+                <input type="password" id="newPassSelf" placeholder="Masukkan Password Baru" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeChangePassModal()" class="px-4 py-2 text-xs font-semibold text-slate-400">Batal</button>
+                <button onclick="submitChangePasswordSelf()" class="btn-primary px-4 py-2 text-xs text-white rounded-xl font-semibold">Perbarui Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER APLIKASI -->
+    <header class="slate-nav sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow">🔎</div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-wide leading-tight text-white">SISTEM COMPERE DATA</h1>
+                    <p class="text-[10px] text-slate-400 font-medium">CARI SELISIH SAMPAI DAPAT DENGAN WEB INI</p>
+                </div>
+            </div>
+
+            <div id="userInfo" class="flex items-center space-x-3">
+                <div class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-full text-xs flex items-center space-x-2">
+                    <span class="text-slate-400 text-[11px]">Proses Data:</span>
+                    <span id="usageCountDisplay" class="font-bold text-emerald-400 font-mono">0x</span>
+                </div>
+
+                <span class="text-xs bg-slate-800 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-full font-medium flex items-center gap-2">
+                    <span id="usernameDisplay">User</span>
+                    <span id="roleLabel" class="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded uppercase font-bold">ROLE</span>
+                </span>
+                
+                <button onclick="openChangePassModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-700 font-medium transition">
+                    Ganti Password
+                </button>
+                <button onclick="handleLogout()" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-xl font-medium transition">
+                    Keluar
+                </button>
+            </div>
         </div>
     </header>
 
+    <!-- KONTEN UTAMA -->
     <main class="max-w-7xl mx-auto px-6 py-8 w-full flex-grow">
-        <div class="mb-8 no-print">
-            <h2 class="text-2xl font-bold text-slate-900">CARILAH SELISIH SAMPAI DAPAT DI SISTEM KAMI</h2>
-            <p class="text-slate-600 mt-1">Hanya Dengan Unggah 1 file Excel, bandingkan isinya dengan status lengkap, lalu cetak atau download, mudah kan.</p>
+        
+        <div class="mb-6 no-print slate-card p-6 rounded-2xl flex flex-col md:flex-row justify-between md:items-center gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-white tracking-tight" id="dashboardTitle">Dashboard Komparasi</h2>
+                <p class="text-slate-400 text-xs mt-1 font-medium">Unggah file Excel, pilih kolom, lalu lakukan pembandingan data.</p>
+            </div>
+
+            <div id="adminTabs" class="hidden flex space-x-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+                <button onclick="switchTab('compare')" id="tabCompareBtn" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white">
+                    Komparasi Data
+                </button>
+                <button onclick="switchTab('users')" id="tabUsersBtn" class="px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
+                    Kelola Pengguna
+                </button>
+            </div>
         </div>
 
-        <!-- Upload Box -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6 no-print">
-            <label class="block text-sm font-semibold text-slate-700 mb-2">Pilih File Excel (.xlsx / .xls / .csv)</label>
-            <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-slate-200 rounded-lg p-1"/>
-            <p id="fileInfo" class="text-xs text-slate-500 mt-2">Belum ada file dipilih</p>
+        <!-- TAB 1: MODUL KOMPARASI DATA -->
+        <div id="tabCompareContent">
+            <div class="slate-card p-6 rounded-2xl mb-6 no-print">
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">1. Pilih File Excel (.xlsx / .csv)</label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/20 file:text-indigo-300 hover:file:bg-indigo-600/30 cursor-pointer border border-slate-700 rounded-xl p-1 bg-slate-900"/>
+                <p id="fileInfo" class="text-xs text-slate-400 mt-2 font-medium">Belum ada file dipilih</p>
+            </div>
+
+            <div class="slate-card p-6 rounded-2xl mb-6 no-print">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4">2. Pengaturan Kolom</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Kolom Pertama (Contoh: EJ)</label>
+                        <input type="text" id="col1" value="EJ" class="slate-input w-full px-4 py-2.5 rounded-xl text-sm font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Kolom Kedua (Contoh: GL)</label>
+                        <input type="text" id="col2" value="GL" class="slate-input w-full px-4 py-2.5 rounded-xl text-sm font-semibold">
+                    </div>
+                    <div>
+                        <button onclick="compareColumns()" id="compareBtn" class="btn-primary w-full text-white font-semibold py-2.5 px-6 rounded-xl transition text-sm disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Proses Komparasi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultSection" class="hidden slate-card p-6 rounded-2xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 no-print">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Hasil Komparasi Data</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Penomoran mengalir secara vertikal ke bawah baru ke kolom berikutnya.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center space-x-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 text-xs">
+                            <span class="text-slate-400 font-semibold px-1">Orientasi:</span>
+                            <select id="printOrientationSelect" onchange="updatePrintPageStyle()" class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-indigo-300 focus:outline-none cursor-pointer">
+                                <option value="portrait" selected>Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 text-xs">
+                            <span class="text-slate-400 font-semibold px-1">Layout Kolom Cetak:</span>
+                            <select id="printColSelect" onchange="renderMultiColumnLayout()" class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-indigo-300 focus:outline-none cursor-pointer">
+                                <option value="1">1 Kolom Standard</option>
+                                <option value="2">2 Kolom Ke Samping</option>
+                                <option value="3" selected>3 Kolom Ke Samping</option>
+                                <option value="4">4 Kolom Ke Samping</option>
+                                <option value="5">5 Kolom Ke Samping</option>
+                            </select>
+                        </div>
+
+                        <button id="btnPrint" onclick="triggerPrint()" class="btn-primary text-white font-medium py-2 px-4 rounded-xl text-xs">
+                            Cetak Laporan
+                        </button>
+                        <button id="btnDownload" onclick="downloadResult()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-4 rounded-xl transition text-xs shadow">
+                            Download Hasil (.xlsx)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
+                    <div class="stat-card-print bg-slate-900 border border-slate-800 rounded-xl p-3.5">
+                        <p class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Total Baris Unique</p>
+                        <p id="statTotal" class="text-xl font-bold text-white font-mono mt-0.5">0</p>
+                    </div>
+                    <div class="stat-card-print bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
+                        <p class="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Data Cocok (TRUE)</p>
+                        <p id="statMatch" class="text-xl font-bold text-emerald-400 font-mono mt-0.5">0</p>
+                    </div>
+                    <div class="stat-card-print bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5">
+                        <p id="statCol1Label" class="text-[10px] font-bold uppercase text-amber-400 tracking-wider">Hanya di Kolom 1</p>
+                        <p id="statCol1Diff" class="text-xl font-bold text-amber-400 font-mono mt-0.5">0</p>
+                    </div>
+                    <div class="stat-card-print bg-rose-500/10 border border-rose-500/20 rounded-xl p-3.5">
+                        <p id="statCol2Label" class="text-[10px] font-bold uppercase text-rose-400 tracking-wider">Hanya di Kolom 2</p>
+                        <p id="statCol2Diff" class="text-xl font-bold text-rose-400 font-mono mt-0.5">0</p>
+                    </div>
+                </div>
+
+                <!-- PREVIEW CONTAINER (TAMPILAN UTUH TANPA MAX-HEIGHT) -->
+                <div id="multiColumnContainer" class="preview-grid cols-3 p-1"></div>
+            </div>
         </div>
 
-        <!-- Column Settings -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8 no-print">
-            <h3 class="text-md font-semibold text-slate-800 mb-4">Pengaturan Kolom & Layout Cetak</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Kolom Pertama (Contoh: EJ)</label>
-                    <input type="text" id="col1" value="EJ" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Kolom Kedua (Contoh: GL)</label>
-                    <input type="text" id="col2" value="GL" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Blok Jejeran</label>
-                    <select id="layoutCols" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-white" onchange="renderTableLayout()">
-                        <option value="1">1 Blok (Memanjang)</option>
-                        <option value="2">2 Blok Berjajar</option>
-                        <option value="3" selected>3 Blok Berjajar</option>
-                        <option value="4">4 Blok Berjajar</option>
-                    </select>
-                </div>
-                <div>
-                    <button onclick="compareColumns()" id="compareBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-sm disabled:opacity-50" disabled>
-                        Proses Komparasi
-                    </button>
+        <!-- TAB 2: MANAJEMEN PENGGUNA (ADMIN ONLY) -->
+        <div id="tabUsersContent" class="hidden space-y-6">
+            <div class="slate-card p-6 rounded-2xl">
+                <h3 class="text-base font-bold text-white mb-4">Daftarkan User Baru (Maker User)</h3>
+                <form id="addUserForm" onsubmit="handleAddUser(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Username</label>
+                        <input type="text" id="newUsername" required placeholder="Contoh: user3" class="slate-input w-full px-4 py-2 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Password</label>
+                        <input type="password" id="newPassword" required placeholder="••••••••" class="slate-input w-full px-4 py-2 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Hak Akses Pengguna</label>
+                        <select id="newRole" class="slate-input w-full px-4 py-2 rounded-xl text-sm bg-slate-900">
+                            <option value="user_full">Akses Penuh (Compere, Download, Print)</option>
+                            <option value="user_limited">Akses Terbatas (Compere & Upload Saja, No Download)</option>
+                            <option value="admin">Administrator Full</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl transition text-sm shadow w-full">
+                            + Simpan User
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="slate-card p-6 rounded-2xl">
+                <h3 class="text-base font-bold text-white mb-4">Daftar Akun & Statistik Penggunaan</h3>
+                <div class="overflow-x-auto border border-slate-700 rounded-xl bg-slate-900">
+                    <table class="min-w-full text-left text-xs whitespace-nowrap">
+                        <thead class="bg-slate-800 border-b border-slate-700 text-slate-300 font-bold">
+                            <tr>
+                                <th class="px-4 py-3">USERNAME</th>
+                                <th class="px-4 py-3">ROLE / HAK AKSES</th>
+                                <th class="px-4 py-3">TOTAL COMPERE</th>
+                                <th class="px-4 py-3">STATUS AKUN</th>
+                                <th class="px-4 py-3">STATUS RESET / TOKEN</th>
+                                <th class="px-4 py-3 text-center">AKSI / KONTROL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Result Section -->
-        <div id="resultSection" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 no-print">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900">Hasil Komparasi</h3>
-                    <p id="summaryText" class="text-sm text-slate-600"></p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm shadow-sm flex items-center space-x-2">
-                        <span>Cetak Laporan</span>
-                    </button>
-                    <button onclick="downloadResult()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-sm shadow-sm flex items-center space-x-2">
-                        <span>Download Hasil (.xlsx)</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Judul khusus cetak -->
-            <div class="hidden print:block mb-4 text-center">
-                <h2 class="text-sm font-bold">HASIL COMPERE EJ DAN GL</h2>
-            </div>
-
-            <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-96">
-                <table class="min-w-full text-left text-xs whitespace-nowrap">
-                    <thead id="dynamicThead" class="bg-slate-100 sticky top-0 border-b border-slate-300"></thead>
-                    <tbody id="dynamicTbody" class="bg-white"></tbody>
-                </table>
-            </div>
-        </div>
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 no-print">
-        SISTEM COMPERE DATA &bull; Iqbalfaldi21
+
+    <footer class="site-footer no-print">
+        Web ini dibuat oleh: <span class="font-semibold text-slate-400">IQBALFALDI</span>
     </footer>
 
     <script>
         let fileData = [];
         let rawComparisonResult = [];
+        let currentUser = null;
 
+        const DEFAULT_USERS = {
+            'admin': { pass: '123', role: 'admin', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
+            'user1': { pass: '123', role: 'user_full', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
+            'user2': { pass: '123', role: 'user_limited', active: true, resetRequested: false, resetToken: null, usageCount: 0 }
+        };
+
+        function getUsersDB() {
+            const stored = localStorage.getItem('app_users_db');
+            if (!stored) {
+                localStorage.setItem('app_users_db', JSON.stringify(DEFAULT_USERS));
+                return DEFAULT_USERS;
+            }
+            return JSON.parse(stored);
+        }
+
+        function saveUsersDB(db) {
+            localStorage.setItem('app_users_db', JSON.stringify(db));
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('app_current_user');
+            const db = getUsersDB();
+            if (savedUser && db[savedUser] && db[savedUser].active) {
+                currentUser = savedUser;
+                applyUserAccess(savedUser);
+            }
+        });
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim().toLowerCase();
+            const p = document.getElementById('password').value.trim();
+            const db = getUsersDB();
+
+            if (!db[u]) {
+                showLoginError("Username tidak ditemukan!");
+                return;
+            }
+            if (!db[u].active) {
+                showLoginError("Akun Anda telah nonaktif. Hubungi Admin!");
+                return;
+            }
+            if (db[u].pass !== p) {
+                showLoginError("Password salah!");
+                return;
+            }
+
+            localStorage.setItem('app_current_user', u);
+            currentUser = u;
+            applyUserAccess(u);
+            document.getElementById('loginGate').classList.add('hidden');
+        }
+
+        function showLoginError(msg) {
+            const err = document.getElementById('loginError');
+            err.innerText = msg;
+            err.classList.remove('hidden');
+        }
+
+        function applyUserAccess(username) {
+            const db = getUsersDB();
+            const user = db[username];
+
+            document.getElementById('loginGate').classList.add('hidden');
+            document.getElementById('usernameDisplay').innerText = username;
+            document.getElementById('roleLabel').innerText = user.role.toUpperCase();
+            document.getElementById('usageCountDisplay').innerText = `${user.usageCount || 0}x`;
+
+            const adminTabs = document.getElementById('adminTabs');
+            const btnDownload = document.getElementById('btnDownload');
+            const btnPrint = document.getElementById('btnPrint');
+
+            if (user.role === 'admin') {
+                adminTabs.classList.remove('hidden');
+                btnDownload.classList.remove('hidden');
+                btnPrint.classList.remove('hidden');
+                renderUsersTable();
+            } else if (user.role === 'user_full') {
+                adminTabs.classList.add('hidden');
+                btnDownload.classList.remove('hidden');
+                btnPrint.classList.remove('hidden');
+            } else if (user.role === 'user_limited') {
+                adminTabs.classList.add('hidden');
+                btnDownload.classList.add('hidden');
+                btnPrint.classList.remove('hidden');
+            }
+        }
+
+        function switchTab(tab) {
+            if (tab === 'compare') {
+                document.getElementById('tabCompareContent').classList.remove('hidden');
+                document.getElementById('tabUsersContent').classList.add('hidden');
+                document.getElementById('tabCompareBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white";
+                document.getElementById('tabUsersBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+            } else {
+                document.getElementById('tabCompareContent').classList.add('hidden');
+                document.getElementById('tabUsersContent').classList.remove('hidden');
+                document.getElementById('tabUsersBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white";
+                document.getElementById('tabCompareBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
+                renderUsersTable();
+            }
+        }
+
+        // --- MANAJEMEN USER ---
+        function handleAddUser(e) {
+            e.preventDefault();
+            const u = document.getElementById('newUsername').value.trim().toLowerCase();
+            const p = document.getElementById('newPassword').value.trim();
+            const r = document.getElementById('newRole').value;
+
+            const db = getUsersDB();
+            if (db[u]) {
+                alert("Username sudah terdaftar!");
+                return;
+            }
+
+            db[u] = { pass: p, role: r, active: true, resetRequested: false, resetToken: null, usageCount: 0 };
+            saveUsersDB(db);
+            renderUsersTable();
+            document.getElementById('addUserForm').reset();
+            alert(`User '${u}' berhasil ditambahkan!`);
+        }
+
+        function toggleUserActive(u) {
+            if (u === currentUser) {
+                alert("Tidak bisa menonaktifkan akun yang sedang digunakan!");
+                return;
+            }
+            const db = getUsersDB();
+            db[u].active = !db[u].active;
+            saveUsersDB(db);
+            renderUsersTable();
+        }
+
+        function deleteUser(u) {
+            if (u === currentUser) {
+                alert("Tidak bisa menghapus akun sendiri!");
+                return;
+            }
+            if (confirm(`Yakin ingin menghapus user '${u}'?`)) {
+                const db = getUsersDB();
+                delete db[u];
+                saveUsersDB(db);
+                renderUsersTable();
+            }
+        }
+
+        function approveResetPass(u) {
+            const token = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const db = getUsersDB();
+            db[u].resetRequested = false;
+            db[u].resetToken = token;
+            saveUsersDB(db);
+            renderUsersTable();
+            alert(`Otorisasi Berhasil!\n\nBerikan Kode Token Otorisasi ini kepada user '${u}':\n>>> ${token} <<<`);
+        }
+
+        function renderUsersTable() {
+            const db = getUsersDB();
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            Object.keys(db).forEach(u => {
+                const user = db[u];
+                const statusBadge = user.active 
+                    ? `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded font-bold">AKTIF</span>`
+                    : `<span class="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] px-2 py-0.5 rounded font-bold">NONAKTIF</span>`;
+
+                let resetStatus = `<span class="text-slate-500 text-[11px]">-</span>`;
+                if (user.resetRequested) {
+                    resetStatus = `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded font-bold">MEMINTA RESET</span>`;
+                } else if (user.resetToken) {
+                    resetStatus = `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] px-2 py-0.5 rounded font-mono font-bold">TOKEN: ${user.resetToken}</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="px-4 py-3 font-semibold text-white">${u}</td>
+                        <td class="px-4 py-3 uppercase text-[11px] text-slate-400">${user.role}</td>
+                        <td class="px-4 py-3 font-bold text-indigo-400 font-mono">${user.usageCount || 0} Kali</td>
+                        <td class="px-4 py-3">${statusBadge}</td>
+                        <td class="px-4 py-3">${resetStatus}</td>
+                        <td class="px-4 py-3 text-center space-x-1">
+                            ${user.resetRequested ? `<button onclick="approveResetPass('${u}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 px-2 py-1 rounded text-xs font-semibold">Otorisasi Token</button>` : ''}
+                            <button onclick="toggleUserActive('${u}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-2 py-1 rounded text-xs font-semibold">${user.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                            <button onclick="deleteUser('${u}')" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 px-2 py-1 rounded text-xs font-semibold">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- RESET & CHANGE PASS ---
+        function openResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
+        function closeResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
+        function submitResetRequest() {
+            const u = document.getElementById('resetUsername').value.trim().toLowerCase();
+            const db = getUsersDB();
+            if (db[u]) {
+                db[u].resetRequested = true;
+                saveUsersDB(db);
+                alert("Permintaan berhasil dikirim ke Admin.");
+                closeResetModal();
+            } else {
+                alert("Username tidak ditemukan.");
+            }
+        }
+
+        function openSetNewPassModal() { document.getElementById('setNewPassModal').classList.remove('hidden'); }
+        function closeSetNewPassModal() { document.getElementById('setNewPassModal').classList.add('hidden'); }
+        function submitNewPasswordWithToken() {
+            const u = document.getElementById('tokenUsername').value.trim().toLowerCase();
+            const token = document.getElementById('tokenCode').value.trim().toUpperCase();
+            const newPass = document.getElementById('userNewPassword').value.trim();
+
+            if (!u || !token || !newPass) {
+                alert("Semua kolom wajib diisi!");
+                return;
+            }
+
+            const db = getUsersDB();
+            if (db[u] && db[u].resetToken === token) {
+                db[u].pass = newPass;
+                db[u].resetToken = null;
+                saveUsersDB(db);
+                alert("Password baru berhasil disimpan!");
+                closeSetNewPassModal();
+            } else {
+                alert("Username atau Token Otorisasi tidak cocok!");
+            }
+        }
+
+        function openChangePassModal() { document.getElementById('changePassModal').classList.remove('hidden'); }
+        function closeChangePassModal() { document.getElementById('changePassModal').classList.add('hidden'); }
+        function submitChangePasswordSelf() {
+            const oldP = document.getElementById('oldPass').value.trim();
+            const newP = document.getElementById('newPassSelf').value.trim();
+
+            if (!oldP || !newP) {
+                alert("Semua kolom wajib diisi!");
+                return;
+            }
+
+            const db = getUsersDB();
+            if (db[currentUser].pass !== oldP) {
+                alert("Password lama Anda salah!");
+                return;
+            }
+
+            db[currentUser].pass = newP;
+            saveUsersDB(db);
+            alert("Password Anda berhasil diperbarui!");
+            closeChangePassModal();
+            document.getElementById('oldPass').value = '';
+            document.getElementById('newPassSelf').value = '';
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('app_current_user');
+            location.reload();
+        }
+
+        // --- EXCEL PROCESS & COMPARE ---
         document.getElementById('excelFile').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            document.getElementById('fileInfo').innerText = `File dipilih: ${file.name}`;
+            document.getElementById('fileInfo').innerText = `File: ${file.name}`;
             
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const wb = XLSX.read(evt.target.result, {type: 'binary'});
                 const ws = wb.Sheets[wb.SheetNames[0]];
                 fileData = XLSX.utils.sheet_to_json(ws, {defval: ""});
-
                 if (fileData.length > 0) {
                     document.getElementById('compareBtn').removeAttribute('disabled');
                 }
@@ -134,141 +760,168 @@
             const c1 = document.getElementById('col1').value.trim();
             const c2 = document.getElementById('col2').value.trim();
 
-            if (!c1 || !c2) {
-                alert("Harap isi nama kedua kolom!");
-                return;
-            }
-
-            let set1 = new Set(fileData.map(r => r[c1] !== undefined && r[c1] !== '' ? String(r[c1]).trim() : null).filter(x => x !== null));
-            let set2 = new Set(fileData.map(r => r[c2] !== undefined && r[c2] !== '' ? String(r[c2]).trim() : null).filter(x => x !== null));
-
-            let allVals = Array.from(new Set([...set1, ...set2])).sort((a,b) => {
-                return !isNaN(a) && !isNaN(b) ? Number(a) - Number(b) : String(a).localeCompare(String(b));
+            let arr1 = [], arr2 = [];
+            fileData.forEach(r => {
+                if (r[c1] !== undefined && r[c1] !== '') arr1.push(String(r[c1]).trim());
+                if (r[c2] !== undefined && r[c2] !== '') arr2.push(String(r[c2]).trim());
             });
+
+            let set1 = new Set(arr1), set2 = new Set(arr2);
+            let allVals = Array.from(new Set([...arr1, ...arr2]));
 
             rawComparisonResult = [];
-            let stats = { sama: 0, hanya1: 0, hanya2: 0 };
+            let countMatch = 0;
+            let countCol1Diff = 0;
+            let countCol2Diff = 0;
 
             allVals.forEach(val => {
-                let in1 = set1.has(val);
-                let in2 = set2.has(val);
+                let in1 = set1.has(val), in2 = set2.has(val);
                 let status = '';
-
+                
                 if (in1 && in2) {
-                    stats.sama++;
                     status = 'TRUE';
-                } else if (in1 && !in2) {
-                    stats.hanya1++;
-                    status = `Hanya ada di kolom ${c1}`;
-                } else if (!in1 && in2) {
-                    stats.hanya2++;
-                    status = `Hanya ada di kolom ${c2}`;
+                    countMatch++;
+                } else if (in1) {
+                    status = `Hanya di ${c1}`;
+                    countCol1Diff++;
+                } else {
+                    status = `Hanya di ${c2}`;
+                    countCol2Diff++;
                 }
 
-                rawComparisonResult.push({
-                    val1: in1 ? val : '',
-                    val2: in2 ? val : '',
-                    status: status
-                });
+                rawComparisonResult.push({ val1: in1 ? val : '', val2: in2 ? val : '', status });
             });
 
-            document.getElementById('summaryText').innerText = `Total Data: ${allVals.length} | Sama: ${stats.sama} | Hanya di ${c1}: ${stats.hanya1} | Hanya di ${c2}: ${stats.hanya2}`;
-            document.getElementById('resultSection').classList.remove('hidden');
+            // UPDATE STATISTIK DATA
+            document.getElementById('statTotal').innerText = allVals.length;
+            document.getElementById('statMatch').innerText = countMatch;
             
-            renderTableLayout();
+            document.getElementById('statCol1Label').innerText = `Hanya di ${c1}`;
+            document.getElementById('statCol1Diff').innerText = countCol1Diff;
+
+            document.getElementById('statCol2Label').innerText = `Hanya di ${c2}`;
+            document.getElementById('statCol2Diff').innerText = countCol2Diff;
+
+            if (currentUser) {
+                const db = getUsersDB();
+                if (db[currentUser]) {
+                    db[currentUser].usageCount = (db[currentUser].usageCount || 0) + 1;
+                    saveUsersDB(db);
+                    document.getElementById('usageCountDisplay').innerText = `${db[currentUser].usageCount}x`;
+                }
+            }
+
+            document.getElementById('resultSection').classList.remove('hidden');
+            renderMultiColumnLayout();
         }
 
-        function renderTableLayout() {
-            if (rawComparisonResult.length === 0) return;
-
-            const cols = parseInt(document.getElementById('layoutCols').value);
+        // RENDER PREVIEW & CETAK MULTI-KOLOM
+        // Pola cetak:
+        //   Halaman 1 : Tabel 1 | Tabel 2 | Tabel 3
+        //   Halaman 2 : Tabel 4 | Tabel 5 | Tabel 6
+        // Jadi data selalu turun ke bawah di dalam tabel, kemudian
+        // pindah ke SAMPING ke tabel berikutnya. Tidak turun ke halaman
+        // berikutnya sebelum semua kolom pada halaman tersebut terisi.
+        function renderMultiColumnLayout() {
+            const numCols = parseInt(document.getElementById('printColSelect').value) || 3;
             const c1 = document.getElementById('col1').value.trim();
             const c2 = document.getElementById('col2').value.trim();
-            
-            const thead = document.getElementById('dynamicThead');
-            const tbody = document.getElementById('dynamicTbody');
+            const container = document.getElementById('multiColumnContainer');
+            const orientation = document.getElementById('printOrientationSelect').value;
 
-            // 1. Buat Header Berjajar
-            let theadHTML = '<tr>';
-            for (let i = 0; i < cols; i++) {
-                theadHTML += `<th class="px-3 py-2 font-semibold text-slate-700 border border-slate-300 text-center">${c1}</th>`;
-                theadHTML += `<th class="px-3 py-2 font-semibold text-slate-700 border border-slate-300 text-center">${c2}</th>`;
-                theadHTML += `<th class="px-3 py-2 font-semibold text-slate-700 border border-slate-300 text-center">STATUS</th>`;
-                if (i < cols - 1) {
-                    theadHTML += `<th class="spacer px-1 py-2 border-none"></th>`;
-                }
-            }
-            theadHTML += '</tr>';
-            thead.innerHTML = theadHTML;
+            container.className = 'p-1';
+            container.innerHTML = '';
 
-            // 2. Buat Body Berjajar ke Samping
-            tbody.innerHTML = '';
-            let totalRows = rawComparisonResult.length;
-            let rowsPerCol = Math.ceil(totalRows / cols);
+            const totalRows = rawComparisonResult.length;
+            if (totalRows === 0) return;
 
-            for (let r = 0; r < rowsPerCol; r++) {
-                let trHTML = '';
-                for (let c = 0; c < cols; c++) {
-                    let dataIndex = c * rowsPerCol + r;
-                    let item = rawComparisonResult[dataIndex];
-                    
-                    let val1 = item ? item.val1 : '';
-                    let val2 = item ? item.val2 : '';
-                    let status = item ? item.status : '';
-                    
-                    // Mengatur warna: Hijau jika TRUE, kuning/amber jika lainnya
-                    let statusClass = status === 'TRUE' ? 'text-emerald-700 font-medium' : 'text-amber-600 font-medium';
+            // Perkiraan jumlah baris yang aman untuk 1 tabel dalam 1 halaman.
+            // Angka ini sengaja dibuat konservatif agar tabel berikutnya
+            // tidak terdorong ke halaman bawah oleh browser saat print.
+            const rowsPerTable = orientation === 'landscape' ? 34 : 48;
 
-                    trHTML += `<td class="px-3 py-1.5 border border-slate-300 text-center">${val1}</td>`;
-                    trHTML += `<td class="px-3 py-1.5 border border-slate-300 text-center">${val2}</td>`;
-                    trHTML += `<td class="px-3 py-1.5 border border-slate-300 text-center ${statusClass}">${status}</td>`;
+            const rowsPerPage = rowsPerTable * numCols;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
 
-                    if (c < cols - 1) {
-                        trHTML += `<td class="spacer px-1 py-1 border-none"></td>`;
+            for (let page = 0; page < totalPages; page++) {
+                const pageStart = page * rowsPerPage;
+                const pageEnd = Math.min(pageStart + rowsPerPage, totalRows);
+
+                const pageDiv = document.createElement('div');
+                pageDiv.className = `print-page cols-${numCols} p-1`;
+
+                for (let col = 0; col < numCols; col++) {
+                    const startIndex = pageStart + (col * rowsPerTable);
+                    const endIndex = Math.min(startIndex + rowsPerTable, pageEnd);
+
+                    if (startIndex >= pageEnd) break;
+
+                    let tableHtml = `
+                        <div class="print-table-block border border-slate-700 rounded-xl overflow-hidden bg-slate-900 h-fit">
+                            <table class="print-table w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-800 text-slate-300 border-b border-slate-700 font-bold">
+                                    <tr>
+                                        <th class="p-2 border-r border-slate-700 text-center w-8">NO</th>
+                                        <th class="p-2 border-r border-slate-700 text-center">${c1}</th>
+                                        <th class="p-2 border-r border-slate-700 text-center">${c2}</th>
+                                        <th class="p-2 text-center">STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800 text-slate-300">
+                    `;
+
+                    for (let i = startIndex; i < endIndex; i++) {
+                        const item = rawComparisonResult[i];
+                        const isTrue = item.status === 'TRUE';
+                        const bgStyle = isTrue
+                            ? 'bg-emerald-500/10 text-emerald-400 font-semibold'
+                            : 'bg-amber-500/10 text-amber-400 font-semibold';
+
+                        tableHtml += `
+                            <tr>
+                                <td class="p-1.5 border-r border-slate-800 font-mono text-center text-[10px] text-slate-400">${i + 1}</td>
+                                <td class="p-1.5 border-r border-slate-800 font-mono text-center">${item.val1}</td>
+                                <td class="p-1.5 border-r border-slate-800 font-mono text-center">${item.val2}</td>
+                                <td class="p-1.5 text-center ${bgStyle}">${item.status}</td>
+                            </tr>
+                        `;
                     }
+
+                    tableHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    pageDiv.insertAdjacentHTML('beforeend', tableHtml);
                 }
-                tbody.innerHTML += `<tr class="hover:bg-slate-50">${trHTML}</tr>`;
+
+                container.appendChild(pageDiv);
             }
+        }
+
+        function updatePrintPageStyle() {
+            const orientation = document.getElementById('printOrientationSelect').value;
+            const styleTag = document.getElementById('dynamicPrintStyle');
+            
+            let currentCss = styleTag.innerHTML;
+            currentCss = currentCss.replace(/@page\s*{[^}]*}/, `@page { size: A4 ${orientation}; margin: 8mm; }`);
+            styleTag.innerHTML = currentCss;
+        }
+
+        function triggerPrint() {
+            updatePrintPageStyle();
+            window.print();
         }
 
         function downloadResult() {
-            if (rawComparisonResult.length === 0) return;
-
-            const cols = parseInt(document.getElementById('layoutCols').value);
             const c1 = document.getElementById('col1').value.trim();
             const c2 = document.getElementById('col2').value.trim();
-
-            let excelDataArray = [];
-            
-            let headerRow = [];
-            for (let c = 0; c < cols; c++) {
-                headerRow.push(c1, c2, 'STATUS');
-                if (c < cols - 1) headerRow.push('');
-            }
-            excelDataArray.push(headerRow);
-
-            let totalRows = rawComparisonResult.length;
-            let rowsPerCol = Math.ceil(totalRows / cols);
-
-            for (let r = 0; r < rowsPerCol; r++) {
-                let rowData = [];
-                for (let c = 0; c < cols; c++) {
-                    let dataIndex = c * rowsPerCol + r;
-                    let item = rawComparisonResult[dataIndex];
-                    
-                    rowData.push(item ? item.val1 : '');
-                    rowData.push(item ? item.val2 : '');
-                    rowData.push(item ? item.status : '');
-
-                    if (c < cols - 1) rowData.push('');
-                }
-                excelDataArray.push(rowData);
-            }
-
-            const ws = XLSX.utils.aoa_to_sheet(excelDataArray);
+            const exportData = rawComparisonResult.map(i => ({ [c1]: i.val1, [c2]: i.val2, "STATUS": i.status }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
-            XLSX.writeFile(wb, "Hasil_Komparasi_MultiBlok.xlsx");
+            XLSX.writeFile(wb, `Hasil_Komparasi_${c1}_vs_${c2}.xlsx`);
         }
     </script>
 </body>
