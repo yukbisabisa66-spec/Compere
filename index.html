@@ -510,8 +510,6 @@ async function getUsersDB() {
         console.error("Gagal mengambil data dari Google Sheets", err);
         return DEFAULT_USERS;
     }
-}
-}
 
         async function saveUsersDB(db) {
     // Ubah object 'db' kembali ke bentuk array untuk dikirim ke SheetDB
