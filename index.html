@@ -489,12 +489,28 @@ async function getUsersDB() {
     try {
         let response = await fetch(SHEETDB_URL);
         let data = await response.json();
-        return data; // Mengambil data langsung dari Google Sheets
+        
+        // Ubah dari Array SheetDB menjadi Object agar sesuai dengan kode login
+        let dbObj = {};
+        if (Array.isArray(data)) {
+            data.forEach(u => {
+                let uname = (u.username || u.USERNAME || "").toLowerCase();
+                if (uname) {
+                    dbObj[uname] = {
+                        pass: u.password || u.PASSWORD || "",
+                        role: u.role || u.ROLE || "user",
+                        active: u.active === 'TRUE' || u.active === true || u.active === undefined,
+                        usageCount: parseInt(u.usageCount || u.USAGECOUNT) || 0
+                    };
+                }
+            });
+        }
+        return dbObj; 
     } catch (err) {
         console.error("Gagal mengambil data dari Google Sheets", err);
-        // Data cadangan jika offline/gagal koneksi
         return DEFAULT_USERS;
     }
+}
 }
 
         async function saveUsersDB(db) {
