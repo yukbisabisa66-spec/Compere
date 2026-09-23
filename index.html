@@ -482,96 +482,35 @@
             'user2': { pass: '123', role: 'user_limited', active: true, resetRequested: false, resetToken: null, usageCount: 0 }
         };
 
-        // Ganti URL ini dengan URL API SheetDB Anda
-const SHEETDB_URL = "https://sheetdb.io/api/v1/pl3nbiqtlpa9g";
-
-async function getUsersDB() {
-    try {
-        let response = await fetch(SHEETDB_URL);
-        let data = await response.json();
-        
-        // Ubah dari Array SheetDB menjadi Object agar sesuai dengan kode login
-        let dbObj = {};
-        if (Array.isArray(data)) {
-            data.forEach(u => {
-                let uname = (u.username || u.USERNAME || "").toLowerCase();
-                if (uname) {
-                    dbObj[uname] = {
-                        pass: u.password || u.PASSWORD || "",
-                        role: u.role || u.ROLE || "user",
-                        active: u.active === 'TRUE' || u.active === true || u.active === undefined,
-                        usageCount: parseInt(u.usageCount || u.USAGECOUNT) || 0
-                    };
-                }
-            });
+        function getUsersDB() {
+            const stored = localStorage.getItem('app_users_db');
+            if (!stored) {
+                localStorage.setItem('app_users_db', JSON.stringify(DEFAULT_USERS));
+                return DEFAULT_USERS;
+            }
+            return JSON.parse(stored);
         }
-        return dbObj; 
-    } catch (err) {
-        console.error("Gagal mengambil data dari Google Sheets", err);
-        return DEFAULT_USERS;
-    }
 
-        async function saveUsersDB(db) {
-    // Ubah object 'db' kembali ke bentuk array untuk dikirim ke SheetDB
-    for (let username in db) {
-        let userData = db[username];
-        try {
-            // Cek apakah data user sudah ada di SheetDB, lalu update atau simpan
-            await fetch(`${SHEETDB_URL}/username/${username}`, {
-                method: 'PUT',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    data: {
-                        password: userData.pass,
-                        role: userData.role,
-                        active: userData.active,
-                        usageCount: userData.usageCount
-                    }
-                })
-            });
-        } catch (err) {
-            console.error("Gagal menyimpan data user ke Google Sheets", err);
+        function saveUsersDB(db) {
+            localStorage.setItem('app_users_db', JSON.stringify(db));
         }
-    }
-}
 
-       window.addEventListener('DOMContentLoaded', async () => {
-    const savedUser = localStorage.getItem('app_current_user');
-    const usersArray = await getUsersDB(); // Ambil data dan tunggu proses async selesai
-    
-    // Ubah format Array dari SheetDB kembali menjadi Object agar cocok dengan kode lama Anda
-    const db = {};
-    if (Array.isArray(usersArray)) {
-        usersArray.forEach(u => {
-            db[u.username] = {
-                pass: u.password,
-                role: u.role,
-                active: u.active === 'TRUE' || u.active === true || u.active === undefined,
-                usageCount: parseInt(u.usageCount) || 0
-            };
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('app_current_user');
+            const db = getUsersDB();
+            if (savedUser && db[savedUser] && db[savedUser].active) {
+                currentUser = savedUser;
+                applyUserAccess(savedUser);
+            }
         });
-    }
 
-    if (savedUser && db[savedUser] && db[savedUser].active) {
-        currentUser = savedUser;
-        // Lanjutkan fungsi login/sesi Anda di sini
-    }
-});
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim().toLowerCase();
+            const p = document.getElementById('password').value.trim();
+            const db = getUsersDB();
 
-        async function handleLogin(e) {
-    e.preventDefault();
-    const u = document.getElementById('username').value.trim().toLowerCase();
-    const p = document.getElementById('password').value.trim();
-   const db = await getUsersDB(); // <--- Baris 568
-    
-    // TAMBAHKAN DUA BARIS INI:
-    console.log("Username yang diketik:", u);
-    console.log("Database dari SheetDB:", db);
-
-    if (!db[u]) { // <--- Baris 570
+            if (!db[u]) {
                 showLoginError("Username tidak ditemukan!");
                 return;
             }
@@ -974,39 +913,16 @@ async function getUsersDB() {
             updatePrintPageStyle();
             window.print();
         }
-window.addEventListener('DOMContentLoaded', async () => {
-   function downloadResult() {
-        const c1 = document.getElementById('col1').value.trim();
-        const c2 = document.getElementById('col2').value.trim();
-        const exportData = rawComparisonResult.map(i => ({ [c1]: i.val1, [c2]: i.val2, "STATUS": i.status }));
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
-        XLSX.writeFile(wb, `Hasil_Komparasi_${c1}_vs_${c2}.xlsx`);
-    }
 
-    // Blok async initialization di dalam DOMContentLoaded
-    window.addEventListener('DOMContentLoaded', async () => {
-        const savedUser = localStorage.getItem('app_current_user');
-        const usersArray = await getUsersDB();
-        
-        const db = {};
-        if (Array.isArray(usersArray)) {
-            usersArray.forEach(u => {
-                db[u.username] = {
-                    pass: u.password,
-                    role: u.role,
-                    active: u.active === 'TRUE' || u.active === true || u.active === undefined,
-                    usageCount: parseInt(u.usageCount) || 0
-                };
-            });
+        function downloadResult() {
+            const c1 = document.getElementById('col1').value.trim();
+            const c2 = document.getElementById('col2').value.trim();
+            const exportData = rawComparisonResult.map(i => ({ [c1]: i.val1, [c2]: i.val2, "STATUS": i.status }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
+            XLSX.writeFile(wb, `Hasil_Komparasi_${c1}_vs_${c2}.xlsx`);
         }
-
-        if (savedUser && db[savedUser] && db[savedUser].active) {
-            currentUser = savedUser;
-            if (typeof showMainApp === 'function') {
-                showMainApp(savedUser, db[savedUser]);
-            }
-        }
-    });
-</script>
+    </script>
+</body>
+</html>
