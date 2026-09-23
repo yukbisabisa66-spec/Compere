@@ -565,9 +565,13 @@ async function getUsersDB() {
     e.preventDefault();
     const u = document.getElementById('username').value.trim().toLowerCase();
     const p = document.getElementById('password').value.trim();
-    const db = await getUsersDB(); // Tambahkan 'await' di sini agar datanya selesai diambil dulu
+   const db = await getUsersDB(); // <--- Baris 568
+    
+    // TAMBAHKAN DUA BARIS INI:
+    console.log("Username yang diketik:", u);
+    console.log("Database dari SheetDB:", db);
 
-            if (!db[u]) {
+    if (!db[u]) { // <--- Baris 570
                 showLoginError("Username tidak ditemukan!");
                 return;
             }
