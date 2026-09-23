@@ -497,9 +497,32 @@ async function getUsersDB() {
     }
 }
 
-        function saveUsersDB(db) {
-            localStorage.setItem('app_users_db', JSON.stringify(db));
+        async function saveUsersDB(db) {
+    // Ubah object 'db' kembali ke bentuk array untuk dikirim ke SheetDB
+    for (let username in db) {
+        let userData = db[username];
+        try {
+            // Cek apakah data user sudah ada di SheetDB, lalu update atau simpan
+            await fetch(`${SHEETDB_URL}/username/${username}`, {
+                method: 'PUT',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    data: {
+                        password: userData.pass,
+                        role: userData.role,
+                        active: userData.active,
+                        usageCount: userData.usageCount
+                    }
+                })
+            });
+        } catch (err) {
+            console.error("Gagal menyimpan data user ke Google Sheets", err);
         }
+    }
+}
 
        window.addEventListener('DOMContentLoaded', async () => {
     const savedUser = localStorage.getItem('app_current_user');
