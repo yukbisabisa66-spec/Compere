@@ -49,6 +49,7 @@
             opacity: 0.9;
         }
 
+        /* GRID LAYOUT DINAMIS UNTUK PREVIEW & PRINT (TANPA MAX-HEIGHT) */
         .preview-grid {
             display: grid;
             gap: 12px;
@@ -66,6 +67,9 @@
             .preview-grid { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
         }
 
+        /* CETAK: SETIAP HALAMAN ADALAH 1 GRUP TABEL.
+           Data mengalir VERTIKAL di tabel, lalu tabel berikutnya ke SAMPING.
+           Setelah semua kolom pada satu halaman penuh, baru pindah ke halaman berikutnya. */
         @page {
             size: A4 portrait;
             margin: 8mm;
@@ -85,6 +89,7 @@
         .print-page.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .print-page.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
+
         .site-footer {
             text-align: center;
             padding: 10px 16px 14px;
@@ -95,11 +100,16 @@
 
         @media print {
             .site-footer { display: none !important; }
+        }
+
+        @media print {
             body {
                 background: white !important;
                 color: black !important;
             }
+
             .no-print { display: none !important; }
+
             #resultSection {
                 border: none !important;
                 box-shadow: none !important;
@@ -107,6 +117,7 @@
                 background: transparent !important;
                 width: 100% !important;
             }
+
             .stat-card-print {
                 border: 1px solid #64748b !important;
                 background: #f8fafc !important;
@@ -114,12 +125,14 @@
                 padding: 4px 8px !important;
                 border-radius: 6px !important;
             }
+
             #multiColumnContainer {
                 display: block !important;
                 width: 100% !important;
                 overflow: visible !important;
                 padding: 0 !important;
             }
+
             .print-page {
                 display: grid !important;
                 width: 100% !important;
@@ -130,10 +143,18 @@
                 page-break-inside: avoid !important;
                 align-items: start !important;
             }
+
             .print-page:last-child {
                 break-after: auto !important;
                 page-break-after: auto !important;
             }
+
+            .print-page.cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+            .print-page.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .print-page.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+            .print-page.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+            .print-page.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+
             .print-table-block {
                 break-inside: avoid !important;
                 page-break-inside: avoid !important;
@@ -143,6 +164,7 @@
                 overflow: hidden !important;
                 height: fit-content !important;
             }
+
             table.print-table {
                 width: 100% !important;
                 border-collapse: collapse !important;
@@ -150,16 +172,19 @@
                 background: white !important;
                 color: black !important;
             }
+
             table.print-table th,
             table.print-table td {
                 padding: 2px 3px !important;
                 border: 1px solid #94a3b8 !important;
             }
+
             table.print-table th {
                 background-color: #f1f5f9 !important;
                 color: black !important;
             }
         }
+
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
@@ -179,16 +204,76 @@
                 <div id="loginError" class="hidden bg-rose-500/10 text-rose-400 text-xs p-3 rounded-xl border border-rose-500/20 text-center font-medium"></div>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Username</label>
-                    <input type="text" id="loginUsername" required placeholder="Masukkan username" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
+                    <input type="text" id="username" required placeholder="Masukkan username" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Password</label>
-                    <input type="password" id="loginPassword" required placeholder="Masukkan password" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
+                    <input type="password" id="password" required placeholder="Masukkan password" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
                 </div>
                 <button type="submit" class="btn-primary w-full text-white font-semibold py-3 rounded-xl text-sm mt-2">
                     Masuk ke Sistem
                 </button>
+
+                <div class="pt-3 flex justify-between items-center text-xs font-medium">
+                    <button type="button" onclick="openResetModal()" class="text-indigo-400 hover:text-indigo-300">Lupa Password?</button>
+                    <button type="button" onclick="openSetNewPassModal()" class="text-emerald-400 hover:text-emerald-300 font-semibold">Gunakan Token?</button>
+                </div>
+
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL RESET & SET PASS -->
+    <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+        <div class="slate-card w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <h3 class="text-base font-bold text-white">Pengajuan Lupa Password</h3>
+            <p class="text-xs text-slate-400">Kirim permintaan reset ke Admin untuk mendapatkan Kode Token.</p>
+            <input type="text" id="resetUsername" placeholder="Masukkan Username Anda" class="slate-input w-full px-4 py-2.5 rounded-xl text-sm">
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200">Batal</button>
+                <button onclick="submitResetRequest()" class="btn-primary px-4 py-2 text-xs text-white rounded-xl font-semibold">Kirim Permintaan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="setNewPassModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+        <div class="slate-card w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <h3 class="text-base font-bold text-white">Buat Password Baru</h3>
+            <p class="text-xs text-slate-400">Masukkan Token Otorisasi dari Admin dan password baru Anda.</p>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Username</label>
+                <input type="text" id="tokenUsername" placeholder="Masukkan Username" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Kode Token Otorisasi</label>
+                <input type="text" id="tokenCode" placeholder="Masukkan Token dari Admin" class="slate-input w-full px-3 py-2 rounded-xl text-sm font-mono uppercase">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Password Baru Anda</label>
+                <input type="password" id="userNewPassword" placeholder="Masukkan Password Baru" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeSetNewPassModal()" class="px-4 py-2 text-xs font-semibold text-slate-400">Batal</button>
+                <button onclick="submitNewPasswordWithToken()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition">Simpan Password Baru</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="changePassModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
+        <div class="slate-card w-full max-w-sm rounded-2xl p-6 space-y-4">
+            <h3 class="text-base font-bold text-white">Ganti Password Akun</h3>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Password Lama</label>
+                <input type="password" id="oldPass" placeholder="Masukkan Password Lama" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 mb-1">Password Baru</label>
+                <input type="password" id="newPassSelf" placeholder="Masukkan Password Baru" class="slate-input w-full px-3 py-2 rounded-xl text-sm">
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeChangePassModal()" class="px-4 py-2 text-xs font-semibold text-slate-400">Batal</button>
+                <button onclick="submitChangePasswordSelf()" class="btn-primary px-4 py-2 text-xs text-white rounded-xl font-semibold">Perbarui Password</button>
+            </div>
         </div>
     </div>
 
@@ -214,6 +299,9 @@
                     <span id="roleLabel" class="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded uppercase font-bold">ROLE</span>
                 </span>
                 
+                <button onclick="openChangePassModal()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl border border-slate-700 font-medium transition">
+                    Ganti Password
+                </button>
                 <button onclick="handleLogout()" class="text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-xl font-medium transition">
                     Keluar
                 </button>
@@ -276,6 +364,14 @@
 
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="flex items-center space-x-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 text-xs">
+                            <span class="text-slate-400 font-semibold px-1">Orientasi:</span>
+                            <select id="printOrientationSelect" onchange="updatePrintPageStyle()" class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-indigo-300 focus:outline-none cursor-pointer">
+                                <option value="portrait" selected>Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2 bg-slate-900 p-1.5 rounded-xl border border-slate-700 text-xs">
                             <span class="text-slate-400 font-semibold px-1">Layout Kolom Cetak:</span>
                             <select id="printColSelect" onchange="renderMultiColumnLayout()" class="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs font-bold text-indigo-300 focus:outline-none cursor-pointer">
                                 <option value="1">1 Kolom Standard</option>
@@ -314,6 +410,7 @@
                     </div>
                 </div>
 
+                <!-- PREVIEW CONTAINER (TAMPILAN UTUH TANPA MAX-HEIGHT) -->
                 <div id="multiColumnContainer" class="preview-grid cols-3 p-1"></div>
             </div>
         </div>
@@ -334,8 +431,8 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Hak Akses Pengguna</label>
                         <select id="newRole" class="slate-input w-full px-4 py-2 rounded-xl text-sm bg-slate-900">
-                            <option value="user_full">Akses Penuh</option>
-                            <option value="user_limited">Akses Terbatas</option>
+                            <option value="user_full">Akses Penuh (Compere, Download, Print)</option>
+                            <option value="user_limited">Akses Terbatas (Compere & Upload Saja, No Download)</option>
                             <option value="admin">Administrator Full</option>
                         </select>
                     </div>
@@ -354,9 +451,11 @@
                         <thead class="bg-slate-800 border-b border-slate-700 text-slate-300 font-bold">
                             <tr>
                                 <th class="px-4 py-3">USERNAME</th>
-                                <th class="px-4 py-3">PASSWORD</th>
                                 <th class="px-4 py-3">ROLE / HAK AKSES</th>
-                                <th class="px-4 py-3 text-center">AKSI</th>
+                                <th class="px-4 py-3">TOTAL COMPERE</th>
+                                <th class="px-4 py-3">STATUS AKUN</th>
+                                <th class="px-4 py-3">STATUS RESET / TOKEN</th>
+                                <th class="px-4 py-3 text-center">AKSI / KONTROL</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody" class="divide-y divide-slate-800 text-slate-300"></tbody>
@@ -367,59 +466,66 @@
 
     </main>
 
+
     <footer class="site-footer no-print">
         Web ini dibuat oleh: <span class="font-semibold text-slate-400">IQBALFALDI</span>
     </footer>
 
     <script>
-        // URL SheetDB Anda (Hubungkan ke Google Sheets agar data permanen di GitHub)
-        const SHEETDB_URL = "https://sheetdb.io/api/v1/masukkan_url_sheetdb_anda_disini";
-
-        let currentUser = null;
         let fileData = [];
         let rawComparisonResult = [];
+        let currentUser = null;
 
-        // Cek login saat pertama buka
+        const DEFAULT_USERS = {
+            'admin': { pass: '123', role: 'admin', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
+            'user1': { pass: '123', role: 'user_full', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
+            'user2': { pass: '123', role: 'user_limited', active: true, resetRequested: false, resetToken: null, usageCount: 0 }
+        };
+
+        function getUsersDB() {
+            const stored = localStorage.getItem('app_users_db');
+            if (!stored) {
+                localStorage.setItem('app_users_db', JSON.stringify(DEFAULT_USERS));
+                return DEFAULT_USERS;
+            }
+            return JSON.parse(stored);
+        }
+
+        function saveUsersDB(db) {
+            localStorage.setItem('app_users_db', JSON.stringify(db));
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             const savedUser = localStorage.getItem('app_current_user');
-            if (savedUser) {
+            const db = getUsersDB();
+            if (savedUser && db[savedUser] && db[savedUser].active) {
                 currentUser = savedUser;
-                fetchUsersAndApply(savedUser);
+                applyUserAccess(savedUser);
             }
         });
 
-        // Ambil data user dari Google Sheets via SheetDB
-        async function fetchUsersFromSheet() {
-            try {
-                let res = await fetch(SHEETDB_URL);
-                let data = await res.json();
-                return data; // Berbentuk array dari Google Sheets
-            } catch (err) {
-                console.error("Gagal ambil data dari SheetDB", err);
-                // Akun default cadangan jika internet/API bermasalah
-                return [
-                    { username: 'admin', password: '123', role: 'admin' },
-                    { username: 'user1', password: '123', role: 'user_full' }
-                ];
-            }
-        }
-
-        async function handleLogin(e) {
+        function handleLogin(e) {
             e.preventDefault();
-            const u = document.getElementById('loginUsername').value.trim().toLowerCase();
-            const p = document.getElementById('loginPassword').value.trim();
+            const u = document.getElementById('username').value.trim().toLowerCase();
+            const p = document.getElementById('password').value.trim();
+            const db = getUsersDB();
 
-            const users = await fetchUsersFromSheet();
-            const found = users.find(x => x.username.toLowerCase() === u && x.password === p);
-
-            if (!found) {
-                showLoginError("Username atau password salah!");
+            if (!db[u]) {
+                showLoginError("Username tidak ditemukan!");
+                return;
+            }
+            if (!db[u].active) {
+                showLoginError("Akun Anda telah nonaktif. Hubungi Admin!");
+                return;
+            }
+            if (db[u].pass !== p) {
+                showLoginError("Password salah!");
                 return;
             }
 
-            localStorage.setItem('app_current_user', found.username);
-            currentUser = found.username;
-            applyUserAccess(found);
+            localStorage.setItem('app_current_user', u);
+            currentUser = u;
+            applyUserAccess(u);
             document.getElementById('loginGate').classList.add('hidden');
         }
 
@@ -429,39 +535,33 @@
             err.classList.remove('hidden');
         }
 
-        async function fetchUsersAndApply(username) {
-            const users = await fetchUsersFromSheet();
-            const found = users.find(x => x.username.toLowerCase() === username.toLowerCase());
-            if (found) {
-                applyUserAccess(found);
-                document.getElementById('loginGate').classList.add('hidden');
-            }
-        }
+        function applyUserAccess(username) {
+            const db = getUsersDB();
+            const user = db[username];
 
-        function applyUserAccess(user) {
-            document.getElementById('usernameDisplay').innerText = user.username;
+            document.getElementById('loginGate').classList.add('hidden');
+            document.getElementById('usernameDisplay').innerText = username;
             document.getElementById('roleLabel').innerText = user.role.toUpperCase();
+            document.getElementById('usageCountDisplay').innerText = `${user.usageCount || 0}x`;
 
             const adminTabs = document.getElementById('adminTabs');
             const btnDownload = document.getElementById('btnDownload');
+            const btnPrint = document.getElementById('btnPrint');
 
             if (user.role === 'admin') {
                 adminTabs.classList.remove('hidden');
                 btnDownload.classList.remove('hidden');
-                loadUsersTableToUI();
-            } else {
+                btnPrint.classList.remove('hidden');
+                renderUsersTable();
+            } else if (user.role === 'user_full') {
                 adminTabs.classList.add('hidden');
-                if (user.role === 'user_limited') {
-                    btnDownload.classList.add('hidden');
-                } else {
-                    btnDownload.classList.remove('hidden');
-                }
+                btnDownload.classList.remove('hidden');
+                btnPrint.classList.remove('hidden');
+            } else if (user.role === 'user_limited') {
+                adminTabs.classList.add('hidden');
+                btnDownload.classList.add('hidden');
+                btnPrint.classList.remove('hidden');
             }
-        }
-
-        function handleLogout() {
-            localStorage.removeItem('app_current_user');
-            location.reload();
         }
 
         function switchTab(tab) {
@@ -475,199 +575,353 @@
                 document.getElementById('tabUsersContent').classList.remove('hidden');
                 document.getElementById('tabUsersBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white";
                 document.getElementById('tabCompareBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
-                loadUsersTableToUI();
+                renderUsersTable();
             }
         }
 
-        // --- TAMBAH USER BARU KE GOOGLE SHEETS VIA SHEETDB ---
-        async function handleAddUser(e) {
+        // --- MANAJEMEN USER ---
+        function handleAddUser(e) {
             e.preventDefault();
-            const u = document.getElementById('newUsername').value.trim();
+            const u = document.getElementById('newUsername').value.trim().toLowerCase();
             const p = document.getElementById('newPassword').value.trim();
             const r = document.getElementById('newRole').value;
 
-            try {
-                let response = await fetch(SHEETDB_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        data: [
-                            { username: u, password: p, role: r }
-                        ]
-                    })
-                });
+            const db = getUsersDB();
+            if (db[u]) {
+                alert("Username sudah terdaftar!");
+                return;
+            }
 
-                if (response.ok) {
-                    alert(`User '${u}' berhasil disimpan secara permanen ke Google Sheets!`);
-                    document.getElementById('addUserForm').reset();
-                    loadUsersTableToUI();
-                } else {
-                    alert("Gagal menyimpan user.");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Terjadi kesalahan koneksi ke database.");
+            db[u] = { pass: p, role: r, active: true, resetRequested: false, resetToken: null, usageCount: 0 };
+            saveUsersDB(db);
+            renderUsersTable();
+            document.getElementById('addUserForm').reset();
+            alert(`User '${u}' berhasil ditambahkan!`);
+        }
+
+        function toggleUserActive(u) {
+            if (u === currentUser) {
+                alert("Tidak bisa menonaktifkan akun yang sedang digunakan!");
+                return;
+            }
+            const db = getUsersDB();
+            db[u].active = !db[u].active;
+            saveUsersDB(db);
+            renderUsersTable();
+        }
+
+        function deleteUser(u) {
+            if (u === currentUser) {
+                alert("Tidak bisa menghapus akun sendiri!");
+                return;
+            }
+            if (confirm(`Yakin ingin menghapus user '${u}'?`)) {
+                const db = getUsersDB();
+                delete db[u];
+                saveUsersDB(db);
+                renderUsersTable();
             }
         }
 
-        async function loadUsersTableToUI() {
-            const users = await fetchUsersFromSheet();
+        function approveResetPass(u) {
+            const token = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const db = getUsersDB();
+            db[u].resetRequested = false;
+            db[u].resetToken = token;
+            saveUsersDB(db);
+            renderUsersTable();
+            alert(`Otorisasi Berhasil!\n\nBerikan Kode Token Otorisasi ini kepada user '${u}':\n>>> ${token} <<<`);
+        }
+
+        function renderUsersTable() {
+            const db = getUsersDB();
             const tbody = document.getElementById('usersTableBody');
             tbody.innerHTML = '';
 
-            users.forEach((user, index) => {
+            Object.keys(db).forEach(u => {
+                const user = db[u];
+                const statusBadge = user.active 
+                    ? `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded font-bold">AKTIF</span>`
+                    : `<span class="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] px-2 py-0.5 rounded font-bold">NONAKTIF</span>`;
+
+                let resetStatus = `<span class="text-slate-500 text-[11px]">-</span>`;
+                if (user.resetRequested) {
+                    resetStatus = `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded font-bold">MEMINTA RESET</span>`;
+                } else if (user.resetToken) {
+                    resetStatus = `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] px-2 py-0.5 rounded font-mono font-bold">TOKEN: ${user.resetToken}</span>`;
+                }
+
                 tbody.innerHTML += `
-                    <tr>
-                        <td class="px-4 py-3 font-semibold">${user.username}</td>
-                        <td class="px-4 py-3 font-mono">••••••</td>
-                        <td class="px-4 py-3"><span class="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${user.role}</span></td>
-                        <td class="px-4 py-3 text-center">
-                            <button onclick="deleteUserFromSheet('${user.username}')" class="text-rose-400 hover:text-rose-300 font-semibold text-xs">Hapus</button>
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="px-4 py-3 font-semibold text-white">${u}</td>
+                        <td class="px-4 py-3 uppercase text-[11px] text-slate-400">${user.role}</td>
+                        <td class="px-4 py-3 font-bold text-indigo-400 font-mono">${user.usageCount || 0} Kali</td>
+                        <td class="px-4 py-3">${statusBadge}</td>
+                        <td class="px-4 py-3">${resetStatus}</td>
+                        <td class="px-4 py-3 text-center space-x-1">
+                            ${user.resetRequested ? `<button onclick="approveResetPass('${u}')" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/30 px-2 py-1 rounded text-xs font-semibold">Otorisasi Token</button>` : ''}
+                            <button onclick="toggleUserActive('${u}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-2 py-1 rounded text-xs font-semibold">${user.active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                            <button onclick="deleteUser('${u}')" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 px-2 py-1 rounded text-xs font-semibold">Hapus</button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        async function deleteUserFromSheet(username) {
-            if (confirm(`Yakin ingin menghapus user ${username}?`)) {
-                try {
-                    await fetch(`${SHEETDB_URL}/username/${username}`, {
-                        method: 'DELETE'
-                    });
-                    alert("User berhasil dihapus.");
-                    loadUsersTableToUI();
-                } catch (err) {
-                    console.error(err);
-                    alert("Gagal menghapus user.");
-                }
+        // --- RESET & CHANGE PASS ---
+        function openResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
+        function closeResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
+        function submitResetRequest() {
+            const u = document.getElementById('resetUsername').value.trim().toLowerCase();
+            const db = getUsersDB();
+            if (db[u]) {
+                db[u].resetRequested = true;
+                saveUsersDB(db);
+                alert("Permintaan berhasil dikirim ke Admin.");
+                closeResetModal();
+            } else {
+                alert("Username tidak ditemukan.");
             }
         }
 
-        // Script Excel Komparasi
-        const excelInput = document.getElementById('excelFile');
-        const fileInfo = document.getElementById('fileInfo');
-        const compareBtn = document.getElementById('compareBtn');
+        function openSetNewPassModal() { document.getElementById('setNewPassModal').classList.remove('hidden'); }
+        function closeSetNewPassModal() { document.getElementById('setNewPassModal').classList.add('hidden'); }
+        function submitNewPasswordWithToken() {
+            const u = document.getElementById('tokenUsername').value.trim().toLowerCase();
+            const token = document.getElementById('tokenCode').value.trim().toUpperCase();
+            const newPass = document.getElementById('userNewPassword').value.trim();
 
-        excelInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            fileInfo.innerText = `File dipilih: ${file.name}`;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                fileData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-                compareBtn.disabled = false;
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        function compareColumns() {
-            const col1Name = document.getElementById('col1').value.trim();
-            const col2Name = document.getElementById('col2').value.trim();
-            if (!col1Name || !col2Name) {
-                alert("Harap isi nama kolom pertama dan kedua!");
+            if (!u || !token || !newPass) {
+                alert("Semua kolom wajib diisi!");
                 return;
             }
 
-            let set1 = new Set();
-            let set2 = new Set();
-            fileData.forEach(row => {
-                if (row[col1Name] !== undefined && row[col1Name] !== "") set1.add(String(row[col1Name]).trim());
-                if (row[col2Name] !== undefined && row[col2Name] !== "") set2.add(String(row[col2Name]).trim());
+            const db = getUsersDB();
+            if (db[u] && db[u].resetToken === token) {
+                db[u].pass = newPass;
+                db[u].resetToken = null;
+                saveUsersDB(db);
+                alert("Password baru berhasil disimpan!");
+                closeSetNewPassModal();
+            } else {
+                alert("Username atau Token Otorisasi tidak cocok!");
+            }
+        }
+
+        function openChangePassModal() { document.getElementById('changePassModal').classList.remove('hidden'); }
+        function closeChangePassModal() { document.getElementById('changePassModal').classList.add('hidden'); }
+        function submitChangePasswordSelf() {
+            const oldP = document.getElementById('oldPass').value.trim();
+            const newP = document.getElementById('newPassSelf').value.trim();
+
+            if (!oldP || !newP) {
+                alert("Semua kolom wajib diisi!");
+                return;
+            }
+
+            const db = getUsersDB();
+            if (db[currentUser].pass !== oldP) {
+                alert("Password lama Anda salah!");
+                return;
+            }
+
+            db[currentUser].pass = newP;
+            saveUsersDB(db);
+            alert("Password Anda berhasil diperbarui!");
+            closeChangePassModal();
+            document.getElementById('oldPass').value = '';
+            document.getElementById('newPassSelf').value = '';
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('app_current_user');
+            location.reload();
+        }
+
+        // --- EXCEL PROCESS & COMPARE ---
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('fileInfo').innerText = `File: ${file.name}`;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const wb = XLSX.read(evt.target.result, {type: 'binary'});
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                fileData = XLSX.utils.sheet_to_json(ws, {defval: ""});
+                if (fileData.length > 0) {
+                    document.getElementById('compareBtn').removeAttribute('disabled');
+                }
+            };
+            reader.readAsBinaryString(file);
+        });
+
+        function compareColumns() {
+            const c1 = document.getElementById('col1').value.trim();
+            const c2 = document.getElementById('col2').value.trim();
+
+            let arr1 = [], arr2 = [];
+            fileData.forEach(r => {
+                if (r[c1] !== undefined && r[c1] !== '') arr1.push(String(r[c1]).trim());
+                if (r[c2] !== undefined && r[c2] !== '') arr2.push(String(r[c2]).trim());
             });
 
-            let allValues = new Set([...set1, ...set2]);
+            let set1 = new Set(arr1), set2 = new Set(arr2);
+            let allVals = Array.from(new Set([...arr1, ...arr2]));
+
             rawComparisonResult = [];
+            let countMatch = 0;
+            let countCol1Diff = 0;
+            let countCol2Diff = 0;
 
-            let matchCount = 0, onlyCol1Count = 0, onlyCol2Count = 0;
+            allVals.forEach(val => {
+                let in1 = set1.has(val), in2 = set2.has(val);
+                let status = '';
+                
+                if (in1 && in2) {
+                    status = 'TRUE';
+                    countMatch++;
+                } else if (in1) {
+                    status = `Hanya di ${c1}`;
+                    countCol1Diff++;
+                } else {
+                    status = `Hanya di ${c2}`;
+                    countCol2Diff++;
+                }
 
-            allValues.forEach(val => {
-                let in1 = set1.has(val);
-                let in2 = set2.has(val);
-                let status = "";
-                if (in1 && in2) { status = "TRUE"; matchCount++; }
-                else if (in1 && !in2) { status = "Hanya Kolom 1"; onlyCol1Count++; }
-                else if (!in1 && in2) { status = "Hanya Kolom 2"; onlyCol2Count++; }
-
-                rawComparisonResult.push({ value: val, status: status });
+                rawComparisonResult.push({ val1: in1 ? val : '', val2: in2 ? val : '', status });
             });
 
-            document.getElementById('statTotal.innerText = allValues.size;');
-            document.getElementById('statTotal').innerText = allValues.size;
-            document.getElementById('statMatch').innerText = matchCount;
-            document.getElementById('statCol1Diff').innerText = onlyCol1Count;
-            document.getElementById('statCol2Diff').innerText = onlyCol2Count;
-            document.getElementById('statCol1Label').innerText = `Hanya di ${col1Name}`;
-            document.getElementById('statCol2Label').innerText = `Hanya di ${col2Name}`;
+            // UPDATE STATISTIK DATA
+            document.getElementById('statTotal').innerText = allVals.length;
+            document.getElementById('statMatch').innerText = countMatch;
+            
+            document.getElementById('statCol1Label').innerText = `Hanya di ${c1}`;
+            document.getElementById('statCol1Diff').innerText = countCol1Diff;
+
+            document.getElementById('statCol2Label').innerText = `Hanya di ${c2}`;
+            document.getElementById('statCol2Diff').innerText = countCol2Diff;
+
+            if (currentUser) {
+                const db = getUsersDB();
+                if (db[currentUser]) {
+                    db[currentUser].usageCount = (db[currentUser].usageCount || 0) + 1;
+                    saveUsersDB(db);
+                    document.getElementById('usageCountDisplay').innerText = `${db[currentUser].usageCount}x`;
+                }
+            }
 
             document.getElementById('resultSection').classList.remove('hidden');
             renderMultiColumnLayout();
         }
 
+        // RENDER PREVIEW & CETAK MULTI-KOLOM
+        // Pola cetak:
+        //   Halaman 1 : Tabel 1 | Tabel 2 | Tabel 3
+        //   Halaman 2 : Tabel 4 | Tabel 5 | Tabel 6
+        // Jadi data selalu turun ke bawah di dalam tabel, kemudian
+        // pindah ke SAMPING ke tabel berikutnya. Tidak turun ke halaman
+        // berikutnya sebelum semua kolom pada halaman tersebut terisi.
         function renderMultiColumnLayout() {
+            const numCols = parseInt(document.getElementById('printColSelect').value) || 3;
+            const c1 = document.getElementById('col1').value.trim();
+            const c2 = document.getElementById('col2').value.trim();
             const container = document.getElementById('multiColumnContainer');
-            const colCount = parseInt(document.getElementById('printColSelect').value);
-            container.className = `preview-grid cols-${colCount} p-1`;
+            const orientation = document.getElementById('printOrientationSelect').value;
+
+            container.className = 'p-1';
             container.innerHTML = '';
 
-            let itemsPerBlock = Math.ceil(rawComparisonResult.length / colCount) || 1;
-            let colName1 = document.getElementById('col1').value.trim();
-            let colName2 = document.getElementById('col2').value.trim();
+            const totalRows = rawComparisonResult.length;
+            if (totalRows === 0) return;
 
-            for (let i = 0; i < colCount; i++) {
-                let chunk = rawComparisonResult.slice(i * itemsPerBlock, (i + 1) * itemsPerBlock);
-                if (chunk.length === 0) continue;
+            // Perkiraan jumlah baris yang aman untuk 1 tabel dalam 1 halaman.
+            // Angka ini sengaja dibuat konservatif agar tabel berikutnya
+            // tidak terdorong ke halaman bawah oleh browser saat print.
+            const rowsPerTable = orientation === 'landscape' ? 34 : 48;
 
-                let startNo = (i * itemsPerBlock) + 1;
-                let tableHtml = `
-                    <div class="print-table-block slate-card rounded-xl overflow-hidden">
-                        <table class="print-table w-full text-left text-xs">
-                            <thead class="bg-slate-800 border-b border-slate-700 text-slate-300">
-                                <tr>
-                                    <th class="px-2 py-1.5 w-8">No</th>
-                                    <th class="px-2 py-1.5">Data Nilai</th>
-                                    <th class="px-2 py-1.5 w-20 text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-800">
-                `;
+            const rowsPerPage = rowsPerTable * numCols;
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
 
-                chunk.forEach((item, idx) => {
-                    let badgeColor = item.status === 'TRUE' ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10';
-                    tableHtml += `
-                        <tr>
-                            <td class="px-2 py-1 text-slate-400 font-mono">${startNo + idx}</td>
-                            <td class="px-2 py-1 font-mono text-white">${item.value}</td>
-                            <td class="px-2 py-1 text-center font-bold ${badgeColor}">${item.status}</td>
-                        </tr>
+            for (let page = 0; page < totalPages; page++) {
+                const pageStart = page * rowsPerPage;
+                const pageEnd = Math.min(pageStart + rowsPerPage, totalRows);
+
+                const pageDiv = document.createElement('div');
+                pageDiv.className = `print-page cols-${numCols} p-1`;
+
+                for (let col = 0; col < numCols; col++) {
+                    const startIndex = pageStart + (col * rowsPerTable);
+                    const endIndex = Math.min(startIndex + rowsPerTable, pageEnd);
+
+                    if (startIndex >= pageEnd) break;
+
+                    let tableHtml = `
+                        <div class="print-table-block border border-slate-700 rounded-xl overflow-hidden bg-slate-900 h-fit">
+                            <table class="print-table w-full text-left text-xs border-collapse">
+                                <thead class="bg-slate-800 text-slate-300 border-b border-slate-700 font-bold">
+                                    <tr>
+                                        <th class="p-2 border-r border-slate-700 text-center w-8">NO</th>
+                                        <th class="p-2 border-r border-slate-700 text-center">${c1}</th>
+                                        <th class="p-2 border-r border-slate-700 text-center">${c2}</th>
+                                        <th class="p-2 text-center">STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800 text-slate-300">
                     `;
-                });
 
-                tableHtml += `</tbody></table></div>`;
-                container.innerHTML += tableHtml;
+                    for (let i = startIndex; i < endIndex; i++) {
+                        const item = rawComparisonResult[i];
+                        const isTrue = item.status === 'TRUE';
+                        const bgStyle = isTrue
+                            ? 'bg-emerald-500/10 text-emerald-400 font-semibold'
+                            : 'bg-amber-500/10 text-amber-400 font-semibold';
+
+                        tableHtml += `
+                            <tr>
+                                <td class="p-1.5 border-r border-slate-800 font-mono text-center text-[10px] text-slate-400">${i + 1}</td>
+                                <td class="p-1.5 border-r border-slate-800 font-mono text-center">${item.val1}</td>
+                                <td class="p-1.5 border-r border-slate-800 font-mono text-center">${item.val2}</td>
+                                <td class="p-1.5 text-center ${bgStyle}">${item.status}</td>
+                            </tr>
+                        `;
+                    }
+
+                    tableHtml += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    pageDiv.insertAdjacentHTML('beforeend', tableHtml);
+                }
+
+                container.appendChild(pageDiv);
             }
         }
 
+        function updatePrintPageStyle() {
+            const orientation = document.getElementById('printOrientationSelect').value;
+            const styleTag = document.getElementById('dynamicPrintStyle');
+            
+            let currentCss = styleTag.innerHTML;
+            currentCss = currentCss.replace(/@page\s*{[^}]*}/, `@page { size: A4 ${orientation}; margin: 8mm; }`);
+            styleTag.innerHTML = currentCss;
+        }
+
         function triggerPrint() {
+            updatePrintPageStyle();
             window.print();
         }
 
         function downloadResult() {
-            let wsData = [["No", "Nilai Data", "Status Komparasi"]];
-            rawComparisonResult.forEach((item, idx) => {
-                wsData.push([idx + 1, item.value, item.status]);
-            });
-            let ws = XLSX.utils.aoa_to_sheet(wsData);
-            let wb = XLSX.utils.book_new();
+            const c1 = document.getElementById('col1').value.trim();
+            const c2 = document.getElementById('col2').value.trim();
+            const exportData = rawComparisonResult.map(i => ({ [c1]: i.val1, [c2]: i.val2, "STATUS": i.status }));
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
-            XLSX.writeFile(wb, "Hasil_Compere_Data.xlsx");
+            XLSX.writeFile(wb, `Hasil_Komparasi_${c1}_vs_${c2}.xlsx`);
         }
     </script>
 </body>
