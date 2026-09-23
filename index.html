@@ -482,14 +482,20 @@
             'user2': { pass: '123', role: 'user_limited', active: true, resetRequested: false, resetToken: null, usageCount: 0 }
         };
 
-        function getUsersDB() {
-            const stored = localStorage.getItem('app_users_db');
-            if (!stored) {
-                localStorage.setItem('app_users_db', JSON.stringify(DEFAULT_USERS));
-                return DEFAULT_USERS;
-            }
-            return JSON.parse(stored);
-        }
+        // Ganti URL ini dengan URL API SheetDB Anda
+const SHEETDB_URL = "https://sheetdb.io/api/v1/pl3nbiqtlpa9g";
+
+async function getUsersDB() {
+    try {
+        let response = await fetch(SHEETDB_URL);
+        let data = await response.json();
+        return data; // Mengambil data langsung dari Google Sheets
+    } catch (err) {
+        console.error("Gagal mengambil data dari Google Sheets", err);
+        // Data cadangan jika offline/gagal koneksi
+        return DEFAULT_USERS;
+    }
+}
 
         function saveUsersDB(db) {
             localStorage.setItem('app_users_db', JSON.stringify(db));
