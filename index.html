@@ -971,36 +971,38 @@ async function getUsersDB() {
             window.print();
         }
 window.addEventListener('DOMContentLoaded', async () => {
-    const savedUser = localStorage.getItem('app_current_user');
-    const usersArray = await getUsersDB();
-    
-    const db = {};
-    if (Array.isArray(usersArray)) {
-        usersArray.forEach(u => {
-            db[u.username] = {
-                pass: u.password,
-                role: u.role,
-                active: u.active === 'TRUE' || u.active === true || u.active === undefined,
-                usageCount: parseInt(u.usageCount) || 0
-            };
-        });
+   function downloadResult() {
+        const c1 = document.getElementById('col1').value.trim();
+        const c2 = document.getElementById('col2').value.trim();
+        const exportData = rawComparisonResult.map(i => ({ [c1]: i.val1, [c2]: i.val2, "STATUS": i.status }));
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
+        XLSX.writeFile(wb, `Hasil_Komparasi_${c1}_vs_${c2}.xlsx`);
     }
 
-    if (savedUser && db[savedUser] && db[savedUser].active) {
-        currentUser = savedUser;
-        if (typeof showMainApp === 'function') {
-            showMainApp(savedUser, db[savedUser]);
-        }
-    }
-});
-        function downloadResult() {
-            const c1 = document.getElementById('col1').value.trim();
-            const c2 = document.getElementById('col2').value.trim();
-            const exportData = rawComparisonResult.map(i => ({ [c1]: i.val1, [c2]: i.val2, "STATUS": i.status }));
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Hasil Komparasi");
-            XLSX.writeFile(wb, `Hasil_Komparasi_${c1}_vs_${c2}.xlsx`);
+    // Blok async initialization di dalam DOMContentLoaded
+    window.addEventListener('DOMContentLoaded', async () => {
+        const savedUser = localStorage.getItem('app_current_user');
+        const usersArray = await getUsersDB();
+        
+        const db = {};
+        if (Array.isArray(usersArray)) {
+            usersArray.forEach(u => {
+                db[u.username] = {
+                    pass: u.password,
+                    role: u.role,
+                    active: u.active === 'TRUE' || u.active === true || u.active === undefined,
+                    usageCount: parseInt(u.usageCount) || 0
+                };
+            });
         }
 
-</html>
+        if (savedUser && db[savedUser] && db[savedUser].active) {
+            currentUser = savedUser;
+            if (typeof showMainApp === 'function') {
+                showMainApp(savedUser, db[savedUser]);
+            }
+        }
+    });
+</script>
