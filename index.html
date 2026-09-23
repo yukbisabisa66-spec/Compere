@@ -501,14 +501,28 @@ async function getUsersDB() {
             localStorage.setItem('app_users_db', JSON.stringify(db));
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('app_current_user');
-            const db = getUsersDB();
-            if (savedUser && db[savedUser] && db[savedUser].active) {
-                currentUser = savedUser;
-                applyUserAccess(savedUser);
-            }
+       window.addEventListener('DOMContentLoaded', async () => {
+    const savedUser = localStorage.getItem('app_current_user');
+    const usersArray = await getUsersDB(); // Ambil data dan tunggu proses async selesai
+    
+    // Ubah format Array dari SheetDB kembali menjadi Object agar cocok dengan kode lama Anda
+    const db = {};
+    if (Array.isArray(usersArray)) {
+        usersArray.forEach(u => {
+            db[u.username] = {
+                pass: u.password,
+                role: u.role,
+                active: u.active === 'TRUE' || u.active === true || u.active === undefined,
+                usageCount: parseInt(u.usageCount) || 0
+            };
         });
+    }
+
+    if (savedUser && db[savedUser] && db[savedUser].active) {
+        currentUser = savedUser;
+        // Lanjutkan fungsi login/sesi Anda di sini
+    }
+});
 
         function handleLogin(e) {
             e.preventDefault();
