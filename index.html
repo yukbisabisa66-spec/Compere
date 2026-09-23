@@ -547,11 +547,11 @@ async function getUsersDB() {
     }
 });
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim().toLowerCase();
-            const p = document.getElementById('password').value.trim();
-            const db = getUsersDB();
+        async function handleLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('username').value.trim().toLowerCase();
+    const p = document.getElementById('password').value.trim();
+    const db = await getUsersDB(); // Tambahkan 'await' di sini agar datanya selesai diambil dulu
 
             if (!db[u]) {
                 showLoginError("Username tidak ditemukan!");
