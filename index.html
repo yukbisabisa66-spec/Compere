@@ -471,20 +471,13 @@
         Web ini dibuat oleh: <span class="font-semibold text-slate-400">IQBALFALDI</span>
     </footer>
 
-    <script>
-       <script>
-    // 1. Tambahkan baris ini (ganti URL di bawah dengan URL Web App milikmu)
+   <script>
+    // MASUKKAN URL WEB APP APPS SCRIPT MILIKMU DI SINI:
     const API_URL = "https://script.google.com/macros/s/AKfycbxKcu550TK_vkFregsFuRnf_s5mlULkLfgSrLgiGdGAFs7hPjqb9XF84NuryqsTsGD-/exec";
 
     let fileData = [];
     let rawComparisonResult = [];
     let currentUser = null;
-
-    const DEFAULT_USERS = {
-        'admin': { pass: '123', role: 'admin', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
-        'user1': { pass: '123', role: 'user_full', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
-        'user2': { pass: '123', role: 'user_limited', active: true, resetRequested: false, resetToken: null, usageCount: 0 }
-    };
 
         const DEFAULT_USERS = {
             'admin': { pass: '123', role: 'admin', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
@@ -514,7 +507,7 @@
             }
         });
 
-      async function handleLogin(e) {
+       async function handleLogin(e) {
     e.preventDefault();
     const u = document.getElementById('username').value.trim().toLowerCase();
     const p = document.getElementById('password').value.trim();
@@ -535,7 +528,7 @@
             localStorage.setItem('app_current_user', u);
             currentUser = u;
 
-            // Inisialisasi role lokal jika belum ada di DB
+            // Inisialisasi role lokal jika belum ada di database lokal
             const db = getUsersDB();
             if (!db[u]) {
                 db[u] = { pass: p, role: 'admin', active: true, usageCount: 0 };
@@ -552,12 +545,6 @@
         showLoginError("Gagal terhubung ke Google Sheets API!");
     }
 }
-
-            localStorage.setItem('app_current_user', u);
-            currentUser = u;
-            applyUserAccess(u);
-            document.getElementById('loginGate').classList.add('hidden');
-        }
 
         function showLoginError(msg) {
             const err = document.getElementById('loginError');
@@ -740,28 +727,43 @@
 
         function openChangePassModal() { document.getElementById('changePassModal').classList.remove('hidden'); }
         function closeChangePassModal() { document.getElementById('changePassModal').classList.add('hidden'); }
-        function submitChangePasswordSelf() {
-            const oldP = document.getElementById('oldPass').value.trim();
-            const newP = document.getElementById('newPassSelf').value.trim();
+      async function submitChangePasswordSelf() {
+    const oldP = document.getElementById('oldPass').value.trim();
+    const newP = document.getElementById('newPassSelf').value.trim();
 
-            if (!oldP || !newP) {
-                alert("Semua kolom wajib diisi!");
-                return;
-            }
+    if (!oldP || !newP) {
+        alert("Semua kolom wajib diisi!");
+        return;
+    }
 
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "gantiPassword",
+                passLama: oldP,
+                passBaru: newP
+            })
+        });
+
+        const result = await response.json();
+        alert(result.message);
+
+        if (result.status === "success") {
             const db = getUsersDB();
-            if (db[currentUser].pass !== oldP) {
-                alert("Password lama Anda salah!");
-                return;
+            if (db[currentUser]) {
+                db[currentUser].pass = newP;
+                saveUsersDB(db);
             }
-
-            db[currentUser].pass = newP;
-            saveUsersDB(db);
-            alert("Password Anda berhasil diperbarui!");
             closeChangePassModal();
             document.getElementById('oldPass').value = '';
             document.getElementById('newPassSelf').value = '';
         }
+    } catch (err) {
+        console.error(err);
+        alert("Gagal memperbarui password di Google Sheets!");
+    }
+}
 
         function handleLogout() {
             localStorage.removeItem('app_current_user');
@@ -955,4 +957,4 @@
         }
     </script>
 </body>
-</html>
+</html>s
