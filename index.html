@@ -472,9 +472,19 @@
     </footer>
 
     <script>
-        let fileData = [];
-        let rawComparisonResult = [];
-        let currentUser = null;
+       <script>
+    // 1. Tambahkan baris ini (ganti URL di bawah dengan URL Web App milikmu)
+    const API_URL = "https://script.google.com/macros/s/AKfycbxKcu550TK_vkFregsFuRnf_s5mlULkLfgSrLgiGdGAFs7hPjqb9XF84NuryqsTsGD-/exec";
+
+    let fileData = [];
+    let rawComparisonResult = [];
+    let currentUser = null;
+
+    const DEFAULT_USERS = {
+        'admin': { pass: '123', role: 'admin', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
+        'user1': { pass: '123', role: 'user_full', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
+        'user2': { pass: '123', role: 'user_limited', active: true, resetRequested: false, resetToken: null, usageCount: 0 }
+    };
 
         const DEFAULT_USERS = {
             'admin': { pass: '123', role: 'admin', active: true, resetRequested: false, resetToken: null, usageCount: 0 },
@@ -504,24 +514,44 @@
             }
         });
 
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim().toLowerCase();
-            const p = document.getElementById('password').value.trim();
-            const db = getUsersDB();
+      async function handleLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('username').value.trim().toLowerCase();
+    const p = document.getElementById('password').value.trim();
 
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "login",
+                email: u,
+                password: p
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+            localStorage.setItem('app_current_user', u);
+            currentUser = u;
+
+            // Inisialisasi role lokal jika belum ada di DB
+            const db = getUsersDB();
             if (!db[u]) {
-                showLoginError("Username tidak ditemukan!");
-                return;
+                db[u] = { pass: p, role: 'admin', active: true, usageCount: 0 };
+                saveUsersDB(db);
             }
-            if (!db[u].active) {
-                showLoginError("Akun Anda telah nonaktif. Hubungi Admin!");
-                return;
-            }
-            if (db[u].pass !== p) {
-                showLoginError("Password salah!");
-                return;
-            }
+
+            applyUserAccess(u);
+            document.getElementById('loginGate').classList.add('hidden');
+        } else {
+            showLoginError(result.message);
+        }
+    } catch (err) {
+        console.error(err);
+        showLoginError("Gagal terhubung ke Google Sheets API!");
+    }
+}
 
             localStorage.setItem('app_current_user', u);
             currentUser = u;
