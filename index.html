@@ -274,7 +274,7 @@
             </div>
 
             <div id="totalBadge" style="display:none" class="items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-full text-xs">
-                <span class="text-slate-400">Total komparasi</span>
+                <span id="totalLabel" class="text-slate-400">Total komparasi</span>
                 <span id="totalCount" class="font-bold text-indigo-400 font-mono">0</span>
             </div>
             <div id="userInfo" class="hidden" style="display:none !important;">
@@ -500,15 +500,30 @@
             } catch (e) { return Promise.resolve(); }
         }
 
+        // Badge status: angka total jika tersambung, pesan merah jika tidak (membantu cek pemasangan).
+        function showTotalStatus(ok, value) {
+            const badge = document.getElementById('totalBadge');
+            const count = document.getElementById('totalCount');
+            document.getElementById('totalLabel').innerText = ok ? 'Total komparasi' : (LOG_URL ? 'Sheet tidak terhubung' : 'LOG_URL belum diisi');
+            count.style.display = ok ? '' : 'none';
+            if (ok) count.innerText = Number(value).toLocaleString('id-ID');
+            badge.style.borderColor = ok ? '' : '#fb7185';
+            badge.title = ok ? '' : 'Buka URL Apps Script (/exec) di tab baru. Harus menampilkan {"total":0}';
+            badge.style.display = 'flex';
+        }
+
         // Ambil total komparasi dari semua pengguna (jumlah baris di sheet Log).
         async function refreshTotal() {
-            if (!LOG_URL) return;
+            if (!LOG_URL) { showTotalStatus(false); return; }
             try {
                 const res = await fetch(LOG_URL + (LOG_URL.includes('?') ? '&' : '?') + 't=' + Date.now());
                 const data = await res.json();
-                document.getElementById('totalCount').innerText = Number(data.total).toLocaleString('id-ID');
-                document.getElementById('totalBadge').style.display = 'flex';
-            } catch (e) { /* badge tetap tersembunyi jika gagal */ }
+                if (typeof data.total !== 'number') throw new Error('respons tidak dikenali');
+                showTotalStatus(true, data.total);
+            } catch (e) {
+                console.warn('Gagal membaca total dari Apps Script:', e);
+                showTotalStatus(false);
+            }
         }
         window.addEventListener('DOMContentLoaded', refreshTotal);
 
