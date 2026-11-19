@@ -7,46 +7,65 @@
     <!-- Library Excel & Tailwind CSS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: { colors: {
+            slate: { 50:'#f3f8fa',100:'#e8f0f4',200:'#cfdde4',300:'#adc2cd',400:'#8da7b4',500:'#6b8795',600:'#3d5d6e',700:'#244456',800:'#163041',900:'#0d1d29',950:'#0a1822' },
+            indigo: { 200:'#f7e3ae',300:'#f2d58a',400:'#ecc566',500:'#e6b84c',600:'#d4a23a' }
+        } } } };
+    </script>
     <style id="dynamicPrintStyle">
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         
-        body { 
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0f172a;
-            color: #f8fafc;
+        :root { --ink:#0a1822; --panel:#112330; --panel2:#0d1d29; --line:#244456; --text:#e8f0f4; --muted:#8da7b4; --brass:#e6b84c; --match:#4fd6a0; --ej:#a99bff; --gl:#ff8a7a; }
+        body {
+            font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--ink); color: var(--text);
+            background-image: linear-gradient(rgba(36,68,86,.22) 1px, transparent 1px), linear-gradient(90deg, rgba(36,68,86,.22) 1px, transparent 1px);
+            background-size: 32px 32px; background-attachment: fixed;
         }
+        .font-display, h1, h2, h3 { font-family: 'Bricolage Grotesque', 'Instrument Sans', sans-serif; letter-spacing: -.01em; }
+        .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace !important; }
+        .slate-card { background: var(--panel); border: 1px solid var(--line); box-shadow: 0 18px 40px -24px rgba(0,0,0,.6); }
+        .slate-nav { background: rgba(10,24,34,.88); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+        .slate-input { background: var(--panel2); border: 1px solid var(--line); color: var(--text); transition: border-color .15s, box-shadow .15s; }
+        .slate-input:focus { border-color: var(--brass); box-shadow: 0 0 0 3px rgba(230,184,76,.18); outline: none; }
+        .btn-primary { background: var(--brass); color: #1a1405 !important; font-weight: 700; transition: filter .15s; }
+        .btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+        .btn-secondary { border: 1px solid var(--brass); color: var(--brass); background: transparent; transition: background .15s; }
+        .btn-secondary:hover { background: rgba(230,184,76,.12); }
+        :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 
-        .slate-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        }
+        .step-title { display:flex; align-items:center; gap:10px; font-family:'Bricolage Grotesque',sans-serif; font-size:16px; font-weight:700; color:var(--text); margin-bottom:14px; }
+        .step-num { display:inline-grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--brass); color:#1a1405; font:700 12px 'JetBrains Mono',monospace; }
 
-        .slate-nav {
-            background: #0f172a;
-            border-bottom: 1px solid #334155;
-        }
+        .meter { display:flex; height:10px; border-radius:99px; overflow:hidden; background:var(--panel2); }
+        .meter span { display:block; height:100%; width:0; transition: width .7s cubic-bezier(.2,.8,.2,1); }
+        .stat-card { background:var(--panel2); border:1px solid var(--line); border-left:3px solid var(--c); border-radius:10px; padding:14px 16px; }
+        .stat-card .lbl { font-size:12px; font-weight:600; color:var(--c); }
+        .stat-card .num { font:700 26px 'JetBrains Mono',monospace; color:var(--c); margin-top:2px; }
 
-        .slate-input {
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: #f8fafc;
-            transition: border-color 0.15s ease;
-        }
+        .rt-block { border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel2); height:fit-content; }
+        .rt-block th { background:var(--panel); color:var(--muted); font-weight:600; font-size:11px; }
+        .rt-block th:nth-child(2) { color:var(--ej); }
+        .rt-block th:nth-child(3) { color:var(--gl); }
+        .rt-block td, .rt-block th { border-top:1px solid rgba(36,68,86,.55); }
+        .rt-block td + td, .rt-block th + th { border-left:1px solid var(--line); }
+        .rt-body { color:var(--text); }
+        .rt-body tr:nth-child(even) { background:rgba(255,255,255,.025); }
+        .rt-no { color:var(--muted); }
+        .st-true { color:var(--match); background:rgba(79,214,160,.10); font-weight:600; }
+        .st-c1 { color:var(--ej); background:rgba(169,155,255,.12); font-weight:600; }
+        .st-c2 { color:var(--gl); background:rgba(255,138,122,.12); font-weight:600; }
 
-        .slate-input:focus {
-            border-color: #6366f1;
-            outline: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-            transition: opacity 0.15s ease;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
+        @media (prefers-reduced-motion: reduce) { .meter span { transition: none; } }
+        @media print {
+            .rt-body, .rt-body td { color:#000 !important; }
+            .rt-body td.st-true { color:#047857 !important; background:transparent !important; }
+            .rt-body td.st-c1 { color:#5b3fd0 !important; background:transparent !important; }
+            .rt-body td.st-c2 { color:#c2410c !important; background:transparent !important; }
+            .stat-card .lbl, .stat-card .num { color:#000 !important; }
         }
 
         /* GRID LAYOUT DINAMIS UNTUK PREVIEW & PRINT (TANPA MAX-HEIGHT) */
@@ -189,40 +208,6 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between text-slate-100">
 
-    <!-- OVERLAY LOGIN -->
-    <div id="loginGate" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
-        <div class="slate-card w-full max-w-md rounded-2xl p-8 shadow-2xl relative overflow-hidden">
-            <div class="text-center mb-6">
-                <div class="w-14 h-14 bg-indigo-600 rounded-xl mx-auto flex items-center justify-center text-white text-xl font-bold shadow-lg mb-3">
-                    EJ
-                </div>
-                <h2 class="text-2xl font-bold text-white tracking-tight">Selamat Datang</h2>
-                <p class="text-xs text-slate-400 mt-1 font-medium">Sistem Compere Data EJ & GL</p>
-            </div>
-            
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-                <div id="loginError" class="hidden bg-rose-500/10 text-rose-400 text-xs p-3 rounded-xl border border-rose-500/20 text-center font-medium"></div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Username</label>
-                    <input type="text" id="username" required placeholder="Masukkan username" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Password</label>
-                    <input type="password" id="password" required placeholder="Masukkan password" class="slate-input w-full px-4 py-3 rounded-xl text-sm">
-                </div>
-                <button type="submit" class="btn-primary w-full text-white font-semibold py-3 rounded-xl text-sm mt-2">
-                    Masuk ke Sistem
-                </button>
-
-                <div class="pt-3 flex justify-between items-center text-xs font-medium">
-                    <button type="button" onclick="openResetModal()" class="text-indigo-400 hover:text-indigo-300">Lupa Password?</button>
-                    <button type="button" onclick="openSetNewPassModal()" class="text-emerald-400 hover:text-emerald-300 font-semibold">Gunakan Token?</button>
-                </div>
-
-            </form>
-        </div>
-    </div>
-
     <!-- MODAL RESET & SET PASS -->
     <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4">
         <div class="slate-card w-full max-w-sm rounded-2xl p-6 space-y-4">
@@ -254,7 +239,7 @@
             </div>
             <div class="flex justify-end space-x-2 pt-2">
                 <button onclick="closeSetNewPassModal()" class="px-4 py-2 text-xs font-semibold text-slate-400">Batal</button>
-                <button onclick="submitNewPasswordWithToken()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition">Simpan Password Baru</button>
+                <button onclick="submitNewPasswordWithToken()" class="btn-primary px-4 py-2 rounded-xl text-xs font-semibold transition">Simpan Password Baru</button>
             </div>
         </div>
     </div>
@@ -281,14 +266,18 @@
     <header class="slate-nav sticky top-0 z-40 no-print">
         <div class="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow">🔎</div>
+                <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="9" fill="#e6b84c"/><rect x="8" y="9" width="7" height="18" rx="2" fill="#1a1405"/><rect x="21" y="9" width="7" height="18" rx="2" fill="#1a1405" opacity=".45"/><rect x="8" y="16.8" width="20" height="2.4" fill="#e6b84c"/></svg>
                 <div>
-                    <h1 class="text-sm font-bold tracking-wide leading-tight text-white">SISTEM COMPERE DATA</h1>
-                    <p class="text-[10px] text-slate-400 font-medium">CARI SELISIH SAMPAI DAPAT DENGAN WEB INI</p>
+                    <h1 class="text-base font-bold leading-tight text-white">Sistem Compere Data</h1>
+                    <p class="text-[11px] text-slate-400 font-medium">Cari selisih sampai dapat dengan web ini</p>
                 </div>
             </div>
 
-            <div id="userInfo" class="flex items-center space-x-3">
+            <div id="totalBadge" style="display:none" class="items-center gap-2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-full text-xs">
+                <span class="text-slate-400">Total komparasi</span>
+                <span id="totalCount" class="font-bold text-indigo-400 font-mono">0</span>
+            </div>
+            <div id="userInfo" class="hidden" style="display:none !important;">
                 <div class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-full text-xs flex items-center space-x-2">
                     <span class="text-slate-400 text-[11px]">Proses Data:</span>
                     <span id="usageCountDisplay" class="font-bold text-emerald-400 font-mono">0x</span>
@@ -314,30 +303,38 @@
         
         <div class="mb-6 no-print slate-card p-6 rounded-2xl flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
-                <h2 class="text-xl font-bold text-white tracking-tight" id="dashboardTitle">Dashboard Komparasi</h2>
-                <p class="text-slate-400 text-xs mt-1 font-medium">Unggah file Excel, pilih kolom, lalu lakukan pembandingan data.</p>
+                <h2 class="text-2xl md:text-3xl font-bold text-white" id="dashboardTitle">Dashboard Komparasi</h2>
+                <p class="text-slate-400 text-sm mt-1.5">Unggah file Excel, pilih kolom, lalu lakukan pembandingan data.</p>
             </div>
 
-            <div id="adminTabs" class="hidden flex space-x-1.5 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
-                <button onclick="switchTab('compare')" id="tabCompareBtn" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white">
+            <div id="adminTabs" class="hidden" style="display:none !important;">
+                <button onclick="switchTab('compare')" id="tabCompareBtn" class="px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-500 text-slate-950">
                     Komparasi Data
                 </button>
                 <button onclick="switchTab('users')" id="tabUsersBtn" class="px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white">
                     Kelola Pengguna
                 </button>
             </div>
+            <svg class="hidden md:block shrink-0" width="170" height="92" viewBox="0 0 170 92" aria-hidden="true">
+                <circle cx="62" cy="46" r="38" fill="rgba(169,155,255,.16)" stroke="#a99bff" stroke-width="1.5"/>
+                <circle cx="108" cy="46" r="38" fill="rgba(255,138,122,.16)" stroke="#ff8a7a" stroke-width="1.5"/>
+                <path d="M85 15.75A38 38 0 0 1 85 76.25A38 38 0 0 1 85 15.75z" fill="rgba(79,214,160,.4)"/>
+                <text x="42" y="50" text-anchor="middle" font-size="13" font-weight="700" fill="#a99bff" font-family="monospace">EJ</text>
+                <text x="128" y="50" text-anchor="middle" font-size="13" font-weight="700" fill="#ff8a7a" font-family="monospace">GL</text>
+                <text x="85" y="49" text-anchor="middle" font-size="8" font-weight="700" fill="#4fd6a0" font-family="monospace">TRUE</text>
+            </svg>
         </div>
 
         <!-- TAB 1: MODUL KOMPARASI DATA -->
         <div id="tabCompareContent">
             <div class="slate-card p-6 rounded-2xl mb-6 no-print">
-                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">1. Pilih File Excel (.xlsx / .csv)</label>
-                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600/20 file:text-indigo-300 hover:file:bg-indigo-600/30 cursor-pointer border border-slate-700 rounded-xl p-1 bg-slate-900"/>
+                <label for="excelFile" class="step-title"><span class="step-num">1</span>Pilih file Excel (.xlsx / .csv)</label>
+                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-500 file:text-slate-950 hover:file:bg-indigo-400 cursor-pointer border border-dashed border-slate-600 rounded-xl p-2 bg-slate-900"/>
                 <p id="fileInfo" class="text-xs text-slate-400 mt-2 font-medium">Belum ada file dipilih</p>
             </div>
 
             <div class="slate-card p-6 rounded-2xl mb-6 no-print">
-                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4">2. Pengaturan Kolom</h3>
+                <h3 class="step-title"><span class="step-num">2</span>Pengaturan kolom</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">Kolom Pertama (Contoh: EJ)</label>
@@ -385,28 +382,40 @@
                         <button id="btnPrint" onclick="triggerPrint()" class="btn-primary text-white font-medium py-2 px-4 rounded-xl text-xs">
                             Cetak Laporan
                         </button>
-                        <button id="btnDownload" onclick="downloadResult()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-4 rounded-xl transition text-xs shadow">
+                        <button id="btnDownload" onclick="downloadResult()" class="btn-secondary font-medium py-2 px-4 rounded-xl text-xs">
                             Download Hasil (.xlsx)
                         </button>
                     </div>
                 </div>
 
+                <div class="no-print mb-5">
+                    <div class="flex items-end justify-between mb-2">
+                        <p class="text-sm text-slate-400">Tingkat kecocokan data</p>
+                        <p id="matchPct" class="font-display text-4xl font-bold" style="color:var(--match)">0%</p>
+                    </div>
+                    <div class="meter">
+                        <span id="barMatch" style="background:var(--match)"></span>
+                        <span id="barC1" style="background:var(--ej)"></span>
+                        <span id="barC2" style="background:var(--gl)"></span>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-6">
-                    <div class="stat-card-print bg-slate-900 border border-slate-800 rounded-xl p-3.5">
-                        <p class="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Total Baris Unique</p>
-                        <p id="statTotal" class="text-xl font-bold text-white font-mono mt-0.5">0</p>
+                    <div class="stat-card stat-card-print" style="--c:var(--text)">
+                        <p class="lbl">Total baris</p>
+                        <p id="statTotal" class="num">0</p>
                     </div>
-                    <div class="stat-card-print bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
-                        <p class="text-[10px] font-bold uppercase text-emerald-400 tracking-wider">Data Cocok (TRUE)</p>
-                        <p id="statMatch" class="text-xl font-bold text-emerald-400 font-mono mt-0.5">0</p>
+                    <div class="stat-card stat-card-print" style="--c:var(--match)">
+                        <p class="lbl">Data cocok (TRUE)</p>
+                        <p id="statMatch" class="num">0</p>
                     </div>
-                    <div class="stat-card-print bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5">
-                        <p id="statCol1Label" class="text-[10px] font-bold uppercase text-amber-400 tracking-wider">Hanya di Kolom 1</p>
-                        <p id="statCol1Diff" class="text-xl font-bold text-amber-400 font-mono mt-0.5">0</p>
+                    <div class="stat-card stat-card-print" style="--c:var(--ej)">
+                        <p id="statCol1Label" class="lbl">Hanya di Kolom 1</p>
+                        <p id="statCol1Diff" class="num">0</p>
                     </div>
-                    <div class="stat-card-print bg-rose-500/10 border border-rose-500/20 rounded-xl p-3.5">
-                        <p id="statCol2Label" class="text-[10px] font-bold uppercase text-rose-400 tracking-wider">Hanya di Kolom 2</p>
-                        <p id="statCol2Diff" class="text-xl font-bold text-rose-400 font-mono mt-0.5">0</p>
+                    <div class="stat-card stat-card-print" style="--c:var(--gl)">
+                        <p id="statCol2Label" class="lbl">Hanya di Kolom 2</p>
+                        <p id="statCol2Diff" class="num">0</p>
                     </div>
                 </div>
 
@@ -437,7 +446,7 @@
                         </select>
                     </div>
                     <div>
-                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl transition text-sm shadow w-full">
+                        <button type="submit" class="btn-primary font-semibold py-2.5 px-4 rounded-xl transition text-sm shadow w-full">
                             + Simpan User
                         </button>
                     </div>
@@ -472,6 +481,37 @@
     </footer>
 
     <script>
+        // URL Web App Google Apps Script (lihat panduan). Kosongkan untuk mematikan pencatatan.
+        const LOG_URL = 'https://script.google.com/macros/s/AKfycbzacERp7SCZAiOgrSgZGElS7py6f35BMjL8ex_dQjnEqwiNONAONEzHiOY0tAQKqfWS/exec';
+
+        function getDeviceId() {
+            try {
+                let id = localStorage.getItem('app_device_id');
+                if (!id) { id = Math.random().toString(36).slice(2, 10); localStorage.setItem('app_device_id', id); }
+                return id;
+            } catch (e) { return 'na'; }
+        }
+
+        // Hanya mengirim jumlah & waktu; isi file Excel tidak ikut terkirim.
+        function logUsage(payload) {
+            if (!LOG_URL) return Promise.resolve();
+            try {
+                return fetch(LOG_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(() => {});
+            } catch (e) { return Promise.resolve(); }
+        }
+
+        // Ambil total komparasi dari semua pengguna (jumlah baris di sheet Log).
+        async function refreshTotal() {
+            if (!LOG_URL) return;
+            try {
+                const res = await fetch(LOG_URL + (LOG_URL.includes('?') ? '&' : '?') + 't=' + Date.now());
+                const data = await res.json();
+                document.getElementById('totalCount').innerText = Number(data.total).toLocaleString('id-ID');
+                document.getElementById('totalBadge').style.display = 'flex';
+            } catch (e) { /* badge tetap tersembunyi jika gagal */ }
+        }
+        window.addEventListener('DOMContentLoaded', refreshTotal);
+
         let fileData = [];
         let rawComparisonResult = [];
         let currentUser = null;
@@ -494,52 +534,26 @@
         function saveUsersDB(db) {
             localStorage.setItem('app_users_db', JSON.stringify(db));
         }
-
         window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('app_current_user');
+            // LOGIN DIHAPUS: aplikasi langsung aktif sebagai admin.
             const db = getUsersDB();
-            if (savedUser && db[savedUser] && db[savedUser].active) {
-                currentUser = savedUser;
-                applyUserAccess(savedUser);
+            const autoUser = 'admin';
+            if (!db[autoUser]) {
+                db[autoUser] = { pass: '123', role: 'admin', active: true, resetRequested: false, resetToken: null, usageCount: 0 };
+                saveUsersDB(db);
+            } else if (!db[autoUser].active) {
+                db[autoUser].active = true;
+                saveUsersDB(db);
             }
+            currentUser = autoUser;
+            localStorage.setItem('app_current_user', autoUser);
+            applyUserAccess(autoUser);
         });
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim().toLowerCase();
-            const p = document.getElementById('password').value.trim();
-            const db = getUsersDB();
-
-            if (!db[u]) {
-                showLoginError("Username tidak ditemukan!");
-                return;
-            }
-            if (!db[u].active) {
-                showLoginError("Akun Anda telah nonaktif. Hubungi Admin!");
-                return;
-            }
-            if (db[u].pass !== p) {
-                showLoginError("Password salah!");
-                return;
-            }
-
-            localStorage.setItem('app_current_user', u);
-            currentUser = u;
-            applyUserAccess(u);
-            document.getElementById('loginGate').classList.add('hidden');
-        }
-
-        function showLoginError(msg) {
-            const err = document.getElementById('loginError');
-            err.innerText = msg;
-            err.classList.remove('hidden');
-        }
 
         function applyUserAccess(username) {
             const db = getUsersDB();
             const user = db[username];
 
-            document.getElementById('loginGate').classList.add('hidden');
             document.getElementById('usernameDisplay').innerText = username;
             document.getElementById('roleLabel').innerText = user.role.toUpperCase();
             document.getElementById('usageCountDisplay').innerText = `${user.usageCount || 0}x`;
@@ -568,12 +582,12 @@
             if (tab === 'compare') {
                 document.getElementById('tabCompareContent').classList.remove('hidden');
                 document.getElementById('tabUsersContent').classList.add('hidden');
-                document.getElementById('tabCompareBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white";
+                document.getElementById('tabCompareBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-500 text-slate-950";
                 document.getElementById('tabUsersBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
             } else {
                 document.getElementById('tabCompareContent').classList.add('hidden');
                 document.getElementById('tabUsersContent').classList.remove('hidden');
-                document.getElementById('tabUsersBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-600 text-white";
+                document.getElementById('tabUsersBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition bg-indigo-500 text-slate-950";
                 document.getElementById('tabCompareBtn').className = "px-4 py-2 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white";
                 renderUsersTable();
             }
@@ -756,6 +770,50 @@
             reader.readAsBinaryString(file);
         });
 
+function diffSequences(a, b, c1, c2) {
+    const n = a.length, m = b.length, max = n + m, off = max + 1;
+    const v = new Int32Array(2 * max + 3);
+    const trace = [];
+    let D = 0;
+    outer: for (let d = 0; d <= max; d++) {
+        trace.push(v.slice(off - d - 1, off + d + 2));
+        for (let k = -d; k <= d; k += 2) {
+            let x = (k === -d || (k !== d && v[off + k - 1] < v[off + k + 1])) ? v[off + k + 1] : v[off + k - 1] + 1;
+            let y = x - k;
+            while (x < n && y < m && a[x] === b[y]) { x++; y++; }
+            v[off + k] = x;
+            if (x >= n && y >= m) { D = d; break outer; }
+        }
+    }
+    const out = [];
+    let x = n, y = m;
+    for (let d = D; d >= 0; d--) {
+        const s = trace[d], k = x - y, base = d + 1;
+        let midX = 0, midY = 0, prevX = 0, prevY = 0, ins = false;
+        if (d > 0) {
+            ins = (k === -d || (k !== d && s[k - 1 + base] < s[k + 1 + base]));
+            const prevK = ins ? k + 1 : k - 1;
+            prevX = s[prevK + base]; prevY = prevX - prevK;
+            midX = ins ? prevX : prevX + 1; midY = ins ? prevY + 1 : prevY;
+        }
+        while (x > midX && y > midY) { x--; y--; out.push({ val1: a[x], val2: b[y], status: 'TRUE' }); }
+        if (d > 0) {
+            if (ins) out.push({ val1: '', val2: b[prevY], status: `Hanya di ${c2}` });
+            else out.push({ val1: a[prevX], val2: '', status: `Hanya di ${c1}` });
+            x = prevX; y = prevY;
+        }
+    }
+    out.reverse();
+    const res = [];
+    for (let i = 0; i < out.length;) {
+        if (out[i].status === 'TRUE') { res.push(out[i++]); continue; }
+        const run = [];
+        while (i < out.length && out[i].status !== 'TRUE') run.push(out[i++]);
+        res.push(...run.filter(r => !r.val1), ...run.filter(r => r.val1));
+    }
+    return res;
+}
+
         function compareColumns() {
             const c1 = document.getElementById('col1').value.trim();
             const c2 = document.getElementById('col2').value.trim();
@@ -766,31 +824,16 @@
                 if (r[c2] !== undefined && r[c2] !== '') arr2.push(String(r[c2]).trim());
             });
 
-            let set1 = new Set(arr1), set2 = new Set(arr2);
-            let allVals = Array.from(new Set([...arr1, ...arr2]));
-
-            rawComparisonResult = [];
-            let countMatch = 0;
-            let countCol1Diff = 0;
-            let countCol2Diff = 0;
-
-            allVals.forEach(val => {
-                let in1 = set1.has(val), in2 = set2.has(val);
-                let status = '';
-                
-                if (in1 && in2) {
-                    status = 'TRUE';
-                    countMatch++;
-                } else if (in1) {
-                    status = `Hanya di ${c1}`;
-                    countCol1Diff++;
-                } else {
-                    status = `Hanya di ${c2}`;
-                    countCol2Diff++;
-                }
-
-                rawComparisonResult.push({ val1: in1 ? val : '', val2: in2 ? val : '', status });
+            // Urutan asli file dipertahankan (tanpa sort, nilai kembar tetap tampil).
+            // EJ jadi patokan: nilai EJ yang tidak ada di GL dikosongkan di sisi GL.
+            rawComparisonResult = diffSequences(arr1, arr2, c1, c2);
+            let countMatch = 0, countCol1Diff = 0, countCol2Diff = 0;
+            rawComparisonResult.forEach(r => {
+                if (r.status === 'TRUE') countMatch++;
+                else if (r.val1) countCol1Diff++;
+                else countCol2Diff++;
             });
+            const allVals = rawComparisonResult;
 
             // UPDATE STATISTIK DATA
             document.getElementById('statTotal').innerText = allVals.length;
@@ -801,6 +844,15 @@
 
             document.getElementById('statCol2Label').innerText = `Hanya di ${c2}`;
             document.getElementById('statCol2Diff').innerText = countCol2Diff;
+
+            const tot = allVals.length || 1;
+            const pct = n => (n / tot * 100) + '%';
+            document.getElementById('matchPct').innerText = Math.round(countMatch / tot * 100) + '%';
+            document.getElementById('barMatch').style.width = pct(countMatch);
+            document.getElementById('barC1').style.width = pct(countCol1Diff);
+            document.getElementById('barC2').style.width = pct(countCol2Diff);
+
+            logUsage({ device: getDeviceId(), ej: arr1.length, gl: arr2.length, rows: allVals.length, cocok: countMatch, hanyaEJ: countCol1Diff, hanyaGL: countCol2Diff }).then(refreshTotal);
 
             if (currentUser) {
                 const db = getUsersDB();
@@ -857,31 +909,29 @@
                     if (startIndex >= pageEnd) break;
 
                     let tableHtml = `
-                        <div class="print-table-block border border-slate-700 rounded-xl overflow-hidden bg-slate-900 h-fit">
+                        <div class="print-table-block rt-block">
                             <table class="print-table w-full text-left text-xs border-collapse">
-                                <thead class="bg-slate-800 text-slate-300 border-b border-slate-700 font-bold">
+                                <thead>
                                     <tr>
-                                        <th class="p-2 border-r border-slate-700 text-center w-8">NO</th>
-                                        <th class="p-2 border-r border-slate-700 text-center">${c1}</th>
-                                        <th class="p-2 border-r border-slate-700 text-center">${c2}</th>
+                                        <th class="p-2 text-center w-8">NO</th>
+                                        <th class="p-2 text-center">${c1}</th>
+                                        <th class="p-2 text-center">${c2}</th>
                                         <th class="p-2 text-center">STATUS</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-800 text-slate-300">
+                                <tbody class="rt-body">
                     `;
 
                     for (let i = startIndex; i < endIndex; i++) {
                         const item = rawComparisonResult[i];
                         const isTrue = item.status === 'TRUE';
-                        const bgStyle = isTrue
-                            ? 'bg-emerald-500/10 text-emerald-400 font-semibold'
-                            : 'bg-amber-500/10 text-amber-400 font-semibold';
+                        const bgStyle = isTrue ? 'st-true' : (item.val1 ? 'st-c1' : 'st-c2');
 
                         tableHtml += `
                             <tr>
-                                <td class="p-1.5 border-r border-slate-800 font-mono text-center text-[10px] text-slate-400">${i + 1}</td>
-                                <td class="p-1.5 border-r border-slate-800 font-mono text-center">${item.val1}</td>
-                                <td class="p-1.5 border-r border-slate-800 font-mono text-center">${item.val2}</td>
+                                <td class="p-1.5 font-mono text-center text-[10px] rt-no">${i + 1}</td>
+                                <td class="p-1.5 font-mono text-center">${item.val1}</td>
+                                <td class="p-1.5 font-mono text-center">${item.val2}</td>
                                 <td class="p-1.5 text-center ${bgStyle}">${item.status}</td>
                             </tr>
                         `;
